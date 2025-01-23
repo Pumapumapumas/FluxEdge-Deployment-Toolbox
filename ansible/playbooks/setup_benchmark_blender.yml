@@ -1,0 +1,57 @@
+# setup_benchmark_blender.yml Playbook
+# This playbook calls roles as necessary to configure the packages and dependencies
+
+
+#### this section of code only installs general packages at their "latest" version ####
+
+# Task to update the apt cache
+- name: Update apt cache
+  apt:
+    update_cache: yes
+  become: yes
+  changed_when: false
+
+# Task to install python3-pip and other utilities
+- name: Install pip and other basic utilities
+  apt:
+    name:
+      - python3      # Install Python 3
+      - python3-pip  # Install pip for Python 3
+      - nano         # Install nano 
+      - wget         # Install wget to pull datasets
+      - iputils-ping # Install basic networking tools
+    state: latest  # Ensures the latest version is installed
+  become: yes
+
+
+#### from this point down, specific dependancies or versions of packages required by Blender are installed as roles
+
+- name: Configure Blender
+  include_role:
+    name: role_configure_blender
+
+# - name: Configure CUDA 12.4 for Detectron2
+#   include_role:
+#     name: role_configure_cuda
+#   vars:
+#     cuda_version: "12.4"
+  
+# - name: Configure Pytorch for Detectron2
+#   include_role:
+#     name: role_configure_pytorch
+
+# - name: Configure opencv for Detectron2
+#   include_role:
+#     name: role_configure_opencv    
+
+# - name: Configure cython for Detectron2
+#   include_role:
+#     name: role_configure_cython        
+
+# - name: Configure pycoco tools for Detectron2
+#   include_role:
+#     name: role_configure_pycoco    
+
+# - name: Configure Detectron2
+#   include_role:
+#     name: role_configure_detectron2            

@@ -1,0 +1,69 @@
+---
+# tasks file for role_configure_stable_diffusion
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+  become: true
+
+- name: Install system dependencies for Stable Diffusion
+  apt:
+    name:
+      - libgl1
+      - libglib2.0-0
+      - libgoogle-perftools-dev
+      - google-perftools
+    state: latest
+  become: true
+
+- name: Set environment variable for Google Performance Tools
+  lineinfile:
+    path: /etc/environment
+    line: 'LD_PRELOAD="/usr/lib/x86_64-linux-gnu/libtcmalloc_minimal.so.4"'
+    create: yes
+  become: true
+
+- name: Ensure installation directory exists
+  file:
+    path: "{{ sd_install_path }}"
+    state: directory
+    owner: "{{ user }}"
+    group: "{{ user }}"
+    mode: '0755'
+  become: true
+  become_user: "{{ user }}"
+
+- name: Install python3.10-venv
+  apt:
+    name:
+      - python3.10-venv
+    state: latest
+  become: true
+
+- name: Clone Stable Diffusion web UI repository
+  git:
+    repo: 'https://github.com/AUTOMATIC1111/stable-diffusion-webui.git'
+    dest: "{{ sd_install_path }}/stable-diffusion-webui"
+    version: "master"
+  become: true
+  become_user: "{{ user }}"
+
+- name: Set up Python virtual environment
+  command:
+    cmd: "python3.10 -m venv venv"
+    chdir: "{{ sd_install_path }}/stable-diffusion-webui"
+  become: true
+  become_user: "{{ user }}"
+
+- name: Run webui.sh within a virtual environment
+  shell: |
+    source ./venv/bin/activate
+    ./webui.sh --listen --api
+  args:
+    chdir: "{{ sd_install_path }}/stable-diffusion-webui"
+  poll: 0
+  become: true
+  become_user: "{{ user }}"
+  environment:
+    PATH: "{{ ansible_env.PATH }}:{{ sd_install_path }}/stable-diffusion-webui/venv/bin"
+

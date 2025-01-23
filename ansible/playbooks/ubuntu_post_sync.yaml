@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ubuntu-playbook-config
+data:
+  ubuntu_post_sync.yml: |
+    ---
+    - name: Ubuntu Post-Sync Configuration
+      hosts: localhost
+      tasks:
+        - name: Ensure required packages are installed
+          apt:
+            name: "{{ item }}"
+            state: present
+            update_cache: yes
+          loop:
+            - htop
+            - curl
+
+        - name: Print deployment verification message
+          debug:
+            msg: "Ubuntu Post-Sync Hook Executed Successfully"

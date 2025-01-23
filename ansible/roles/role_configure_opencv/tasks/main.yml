@@ -1,0 +1,7 @@
+# main.yml for role_configure_opencv
+# This role installs Open Source Computer Vision Library
+
+- name: Install opencv-python with pip
+  pip:
+    name: opencv-python
+    state: latest

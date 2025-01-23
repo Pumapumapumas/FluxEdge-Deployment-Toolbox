@@ -1,0 +1,5 @@
+---
+
+# Default variables for Blender Benchmark CLI installation
+blender_benchmark_cli_url: "https://download.blender.org/release/BlenderBenchmark2.0/launcher/benchmark-launcher-cli-3.1.0-linux.tar.gz"
+blender_benchmark_cli_dest: "/opt/blender_benchmark"

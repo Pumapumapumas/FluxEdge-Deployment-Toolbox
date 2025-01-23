@@ -1,0 +1,20 @@
+# main.yml for role_configure_jupyter
+# This role installs Jupyter Notebooks web server 
+# the handler restarts the webserver only if the install occurs (making it idempotant)
+
+# main.yml for role_configure_jupyter
+# This role installs and manages Jupyter Notebook web server, ensuring it's always running if not already started.
+
+- name: Install Jupyter Notebook
+  pip:
+    name: notebook
+    state: latest
+  become: true
+
+- name: Start Jupyter Notebook if not running
+  shell: |
+    nohup jupyter notebook --ip=0.0.0.0 --port=8888 --notebook-dir=/ --allow-root --no-browser &> /var/log/jupyter.log &
+  async: 10
+  poll: 0
+  become: true
+

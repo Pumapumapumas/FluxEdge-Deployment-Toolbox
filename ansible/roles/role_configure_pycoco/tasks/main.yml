@@ -1,0 +1,26 @@
+# this role installs Pycocotools
+# this is a pip install from a github source, so in order to make the instlalation process idempotant
+# it first clones it locally to "opt" then it installs only if there is a change to the download. 
+
+- name: Ensure the /opt/github_packages directory exists for GitHub packages
+  file:
+    path: /opt/github_packages
+    state: directory
+    mode: '0755'
+  become: yes
+
+- name: Clone cocoapi repository into /opt/github_packages
+  git:
+    repo: 'https://github.com/philferriere/cocoapi.git'
+    dest: '/opt/github_packages/cocoapi'
+    clone: yes
+    update: yes
+  register: git_clone_cocoapi
+  become: yes
+
+- name: Install pycocotools from the local clone if updated
+  pip:
+    name: '/opt/github_packages/cocoapi/PythonAPI'
+    state: latest
+  when: git_clone_cocoapi.changed
+  become: yes

@@ -1,0 +1,22 @@
+---
+# tasks file for role_configure_open_ui
+
+- name: Pull the Open Web UI Docker image
+  ansible.builtin.docker_image:
+    name: ghcr.io/open-webui/open-webui:main
+    source: pull
+
+- name: Run Open Web UI Docker container
+  ansible.builtin.docker_container:
+    name: open-webui
+    image: ghcr.io/open-webui/open-webui:main
+    state: started
+    restart_policy: always
+    published_ports:
+      - "8888:8080"
+    volumes:
+      - "open-webui:/app/backend/data"
+    env:
+      OLLAMA_BASE_URL: "http://127.0.0.1:11434"
+    network_mode: host
+    detached: yes

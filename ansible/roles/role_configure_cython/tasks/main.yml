@@ -1,0 +1,6 @@
+---
+# tasks file for role_install_cython
+- name: Install Cython with pip
+  pip:
+    name: Cython
+    state: latest

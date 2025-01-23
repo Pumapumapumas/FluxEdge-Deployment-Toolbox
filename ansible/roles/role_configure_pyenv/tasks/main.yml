@@ -1,0 +1,80 @@
+---
+# tasks file for role_configure_pyenv
+
+- name: Install dependencies for pyenv
+  become: yes  # runs as root
+  apt:
+    name:
+      - make
+      - build-essential
+      - libssl-dev
+      - zlib1g-dev
+      - libbz2-dev
+      - libreadline-dev
+      - libsqlite3-dev
+      - wget
+      - curl
+      - llvm
+      - libncursesw5-dev
+      - xz-utils
+      - tk-dev
+      - libxml2-dev
+      - libxmlsec1-dev
+      - libffi-dev
+      - liblzma-dev
+  when: ansible_os_family == 'Debian' 
+
+- name: Install and configure pyenv
+  become: yes
+  become_user: "{{ user }}"  # user name passed in vars (references global vars)
+  block:
+  
+    - name: Install pyenv
+      git:
+        repo: 'https://github.com/pyenv/pyenv.git'
+        dest: "~/.pyenv"
+        version: master
+
+    - name: Install pyenv-virtualenv plugin
+      git:
+        repo: 'https://github.com/pyenv/pyenv-virtualenv.git'
+        dest: "~/.pyenv/plugins/pyenv-virtualenv"
+        version: master
+
+    - name: Set environment variables for pyenv in bashrc
+      lineinfile:
+        path: "~/.bashrc"
+        line: "{{ item }}"
+      with_items:
+        - 'export PYENV_ROOT="$HOME/.pyenv"'
+        - 'export PATH="$PYENV_ROOT/bin:$PYENV_ROOT/shims:$PATH"'
+        - 'eval "$(pyenv init --path)"'
+        - 'eval "$(pyenv virtualenv-init -)"'
+
+    - name: Check if specific Python version is already installed
+      command: /bin/bash -lc "~/.pyenv/bin/pyenv versions --bare"
+      register: installed_python_versions
+      changed_when: false
+      failed_when: false
+
+    - name: Install specific version of Python using pyenv
+      command: /bin/bash -lc "~/.pyenv/bin/pyenv install {{ python_version }}"
+      when: 
+        - configure_python
+        - python_version not in installed_python_versions.stdout_lines
+
+    - name: Set global Python version
+      command: /bin/bash -lc "~/.pyenv/bin/pyenv global {{ python_version }}"
+      when:
+        - configure_python
+        - activate_env
+        - python_version in installed_python_versions.stdout_lines
+
+    - name: Echo PATH and pyenv version
+      command: /bin/bash -lc "echo $PATH && ~/.pyenv/bin/pyenv --version"
+      register: pyenv_test
+      ignore_errors: yes
+
+    - name: Debug pyenv initialization
+      debug:
+        msg: "{{ pyenv_test.stdout_lines }}"

@@ -1,0 +1,29 @@
+# # handlers/main.yml
+# # handler file for Jupyter role
+
+# - name: restart jupyter notebook
+#   block:
+#     - name: Check if Jupyter Notebook is running
+#       shell: pgrep -f "jupyter-notebook"
+#       register: jupyter_process
+#       ignore_errors: true
+#       failed_when: false  # This prevents the task from failing and suppresses the red error message
+
+#     - name: Kill Jupyter Notebook if running
+#       shell: pkill -f "jupyter-notebook"
+#       when: jupyter_process.rc == 0
+#       ignore_errors: true
+
+#     - name: Start Jupyter Notebook
+#       shell: |
+#         nohup jupyter notebook \
+#         --ip=0.0.0.0 \
+#         --port=8888 \
+#         --notebook-dir=/ \
+#         --allow-root \
+#         --no-browser \
+#         --NotebookApp.token='' \
+#         --NotebookApp.password='' &> /var/log/jupyter.log &
+#       async: 10
+#       poll: 0
+#       when: jupyter_process.rc != 0

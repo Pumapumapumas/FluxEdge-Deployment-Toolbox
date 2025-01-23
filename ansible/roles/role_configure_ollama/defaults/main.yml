@@ -1,0 +1,15 @@
+---
+# defaults file for role_configure_ollama
+
+# list of AI models to load based on use case
+default_models:
+    # - "gemma"
+    # - "codegemma"
+    - "tinyllama"
+
+skyy_net_ai_models:
+    # - "llama2:7b"
+    # - "gemma"
+    #- "codegemma"
+    - "tinyllama"
+

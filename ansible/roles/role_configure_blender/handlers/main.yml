@@ -1,0 +1,8 @@
+---
+# handlers file for role_configure_blender
+
+- name: restart blender benchmark
+  systemd:
+    name: blender_benchmark
+    state: restarted
+  become: true

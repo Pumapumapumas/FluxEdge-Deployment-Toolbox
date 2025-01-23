@@ -1,0 +1,92 @@
+# AI_Toolbox.yml Playbook
+# This playbook allows users to select options for configuring the container environment.
+
+- name: FLux Edge AI Toolbox Playbook
+  hosts: localhost
+  gather_facts: yes
+  vars_files:
+    - ../vars/global.yml
+
+  
+  
+  # Prompt the user to select an option
+  vars_prompt:
+  - name: "option"
+    prompt: |
+      " ░▒▓██████▓▒░░▒▓█▓▒░      ░▒▓████████▓▒░▒▓██████▓▒░ ░▒▓██████▓▒░░▒▓█▓▒░      ░▒▓███████▓▒░ ░▒▓██████▓▒░░▒▓█▓▒░░▒▓█▓▒░      
+       ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░         ░▒▓█▓▒░  ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░      
+       ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░         ░▒▓█▓▒░  ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░      
+       ░▒▓████████▓▒░▒▓█▓▒░         ░▒▓█▓▒░  ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓███████▓▒░░▒▓█▓▒░░▒▓█▓▒░░▒▓██████▓▒░       
+       ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░         ░▒▓█▓▒░  ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░      
+       ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░         ░▒▓█▓▒░  ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░      
+       ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░         ░▒▓█▓▒░   ░▒▓██████▓▒░ ░▒▓██████▓▒░░▒▓████████▓▒░▒▓███████▓▒░ ░▒▓██████▓▒░░▒▓█▓▒░░▒▓█▓▒░      
+ 
+       built by pumapumapumas @ Hello Skyy
+ 
+       
+       Choose an environment deployment option: 
+       (this will configure the container environment and install the model or framework)
+
+       1. Configure FluxEdge container for Detectron2 Computer Vision Framework (Uses Ubuntu Generic Container)
+       2. Configure FluxEdge container for Ollama LLM Framework (Uses Default Ollama Container)
+       3. Configure FluxEdge container for Stable Diffusion and 1111 User Interface (Uses Ubuntu Generic Container)
+
+       
+       Or Choose a project deployment option: 
+       (see environment requirements)
+       
+       4. Import Skyy-Med Detectron2 medical imaging model (uses AI Toolbox Detectron2 environment)
+       5. Import Benchmark Blender (Uses Ubuntu Generic Container)
+       6. (Your custom project here)
+
+       
+       Exit AI Toolbox:
+       
+       7. Exit AI Toolbox"
+
+    private: no
+      
+  tasks:
+    # Validate the selected option
+    - name: Validate the selected option
+      block:
+        - assert:
+            that:
+              - option | int in [1, 2, 3, 4, 5, 6, 7]
+            msg: "Invalid option. Please choose a valid option (1, 2, 3, 4, 5, 6, or 7)."
+      
+    # Process selected option
+    - name: Process selected option
+      block:
+        - name: Display selected option
+          debug:
+            msg: "You selected option {{ option }}"
+            
+        # Add tasks or roles based on the selected option
+        - include_tasks: environment_detectron2.yml
+          when: option | int == 1
+        
+        - include_tasks: environment_ollama.yml
+          when: option | int == 2
+
+        - include_tasks: environment_stable_diffusion.yml
+          when: option | int == 3
+
+        - include_tasks: setup_skyynet_ai.yml
+          when: option | int == 4
+
+        - include_tasks: setup_benchmark_blender.yml
+          when: option | int == 5  
+
+        - debug:
+            msg: "Placeholder for future features."
+          when: option | int == [6]  
+          
+      when: option | int in [1, 2, 3, 4, 5, 6]
+
+    # Exit AI Toolbox
+    - name: Exit AI Toolbox
+      block:
+        - debug:
+            msg: "Exiting AI Toolbox."
+      when: option | int == 7

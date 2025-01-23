@@ -1,0 +1,26 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ubuntu-post-sync
+  annotations:
+    argocd.argoproj.io/hook: PostSync                 # Define as a PostSync hook
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded  # Clean up on success
+spec:
+  template:
+    spec:
+      containers:
+      - name: ansible-runner
+        image: ansible/ansible-runner                 # Use an Ansible image
+        command: ["/bin/bash", "-c"]
+        args:
+          - >
+            echo "Running Ansible Playbook for Ubuntu Deployment";
+            ansible-playbook -i 'localhost,' -c local /playbooks/ubuntu_post_sync.yml
+        volumeMounts:
+        - name: playbooks
+          mountPath: /playbooks                       # Playbooks mount point
+      volumes:
+      - name: playbooks
+        configMap:
+          name: ubuntu-playbook-config                # ConfigMap containing the playbook
+      restartPolicy: Never                            # Do not restart the job on completion

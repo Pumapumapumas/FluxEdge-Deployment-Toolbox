@@ -1,0 +1,77 @@
+
+# role_configure_docker.yml
+# tasks file for role_configure_docker
+
+- name: Update the apt cache
+  ansible.builtin.apt:
+    update_cache: yes
+  ignore_errors: true
+
+- name: Install required packages
+  ansible.builtin.apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gnupg
+      - software-properties-common
+    state: present
+  ignore_errors: true
+
+- block:
+    - name: Check if Docker GPG key is already added
+      ansible.builtin.stat:
+        path: /usr/share/keyrings/docker-archive-keyring.gpg
+      register: docker_gpg_key
+      failed_when: false  # This tells Ansible that this task never fails
+
+    - name: Download and add Docker GPG key
+      ansible.builtin.shell:
+        cmd: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+      args:
+        executable: /bin/bash
+      when: not docker_gpg_key.stat.exists
+      warn: false  # This disables warnings for this task
+
+    - name: Add Docker repository
+      ansible.builtin.apt_repository:
+        repo: "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release | lower }} stable"
+        filename: 'docker'
+        update_cache: yes
+
+    - name: Update apt cache just before Docker installation
+      ansible.builtin.apt:
+        update_cache: yes
+
+    - name: Install Docker and its components
+      ansible.builtin.apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+
+    - name: Install Docker Python SDK
+      ansible.builtin.pip:
+        name: docker
+        state: present
+      become: true
+
+  rescue:
+    - name: Error Handling Block
+      debug:
+        msg: "An error occurred, but we are skipping it and continuing with the next tasks."
+      ignore_errors: true
+
+- name: Ensure Docker group exists
+  ansible.builtin.group:
+    name: docker
+    state: present
+
+- name: Add root to the docker group
+  ansible.builtin.user:
+    name: "root"
+    groups: docker
+    append: yes

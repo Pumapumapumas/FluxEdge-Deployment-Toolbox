@@ -1,0 +1,12 @@
+---
+# defaults file for role_configure_new_user
+
+# list of users to add based on use case
+sd_user:
+    - "sduser"
+
+sd_password:
+    - "sduser"
+
+sd_sudoers:
+    - "yes"

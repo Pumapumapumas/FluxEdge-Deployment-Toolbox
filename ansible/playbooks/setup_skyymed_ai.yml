@@ -1,0 +1,8 @@
+# /AI-Toolbox/ansible/playbooks/setup_skyymed_ai.yml
+
+- name: Clone SkyyMed AI Repository
+  include_role:
+    name: clone_repository
+  vars:
+    repository_url: "{{ skyy_net_url }}"
+    destination_path: "{{ skyy_net_destination_path }}"

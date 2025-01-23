@@ -1,0 +1,22 @@
+---
+# tasks file for role_configure_new_user
+- name: Install sudo
+  ansible.builtin.package:
+    name: sudo
+    state: present
+  become: true
+
+- name: Create a new user
+  ansible.builtin.user:
+    name: "{{ user_to_add }}"
+    password: "{{ user_password | password_hash('sha512') }}"
+    shell: /bin/bash
+    create_home: yes
+  become: true
+
+- name: Grant sudo rights to the new user
+  ansible.builtin.copy:
+    dest: "/etc/sudoers.d/{{ user_to_add }}"
+    content: "{{ user_to_add }} ALL=(ALL) NOPASSWD: ALL"
+    mode: '0440'
+  become: true
