@@ -7,24 +7,23 @@ The purpose of **Hello Skyy** is To provide a central hub, on decentralized infr
 - [Learn more about us](https://web.helloskyy.io)
 - [Join our Discord](https://discord.io/techdufus)
 
-# FluxEdge AI Toolbox
+# FluxEdge Deployment Toolbox
 
-The **FluxEdge AI Toolbox** streamlines the configuration of custom container environments on FluxEdge using an Ansible framework. This toolbox automates the setup for various AI frameworks and models, catering to advanced user requirements beyond the standard offerings in the FluxEdge marketplace.
+The **FluxEdge Deployment Toolbox** streamlines the configuration of custom container environments and deployment management on FluxEdge using an Ansible framework. This toolbox automates the setup and configuration of various AI and Deep learning applicaitons and models, in a simple easy to use framework that encourages COmmunity involvement in creating and maintaining quick deployments not maintained by the Flux Team. 
 
 Our goal is to enable rapid reproduction of custom work environments, letting data scientists focus on learning AI rather than on technical setup complexities.
 
 ## Features
 
+- **Kubernetes .yml files** for overall deployment management. 
 - **Bash script installation** of Ansible, a user-friendly "Configuration as Code" tool using YAML.
-- **Terminal GUI access** through FluxEdge, prompting users for their desired AI environment setup.
-- **Execution of Ansible plays/tasks/roles** to configure necessary packages and dependencies.
-- **Rapid project deployment**, allowing the installation of a sample project for environment functionality testing and exploration.
-
+- **Execution of Ansible plays/tasks/roles** to configure necessary packages, dependencies, and environmnet utilizing miniconda.
+- **Rapid project deployment**, this framework can be forked and used for private deployment development for individuals and organizations
 ## Community and Contributions
 
-These tools are freely available for both private and public use. We encourage you to use this framework to enhance your deployment projects and welcome contributions that benefit the community.
+These tools are freely available for both private and public use. We encourage you to use this framework to enhance your deployment projects and welcome contributions that benefit the community maintained library of "quick deployments" by creating a method to submit your deployments to the team for inclusion on the platform.
 
-## Getting Started
+## Getting Started (from here down needs to be revised completely)
 
 Ensure you've met the following prerequisites:
 
