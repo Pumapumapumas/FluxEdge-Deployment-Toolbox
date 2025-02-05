@@ -1,0 +1,121 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  generateName: open-source-template-
+  labels:
+    app: open-source-template
+spec:
+  selector:
+    matchLabels:
+      app: open-source-template
+  template:
+    metadata:
+      labels:
+        app: open-source-template
+    spec:
+      dnsPolicy: None
+      dnsConfig:
+        nameservers:
+          - 8.8.8.8
+          - 1.1.1.1
+      containers:
+        - name: ubuntu
+          image: ubuntu:22.04
+          hostNetwork: true
+          command:
+            - /bin/bash
+          args:
+            - -c
+            - |
+              setup() {
+                echo "Updating system and installing dependencies..."
+                apt-get -y update && apt-get -y upgrade && apt-get -y install curl vim git || {
+                  echo "Error: Failed to install dependencies." | tee /tmp/setup-failed
+                  exit 1
+                }
+
+                echo "Downloading deployment script..."
+                curl -o /tmp/deployment.sh https://raw.githubusercontent.com/helloskyy-io/FluxEdge-Deployment-Toolbox/refs/heads/main/deployments/template_test/deployment_configs/deployment.sh || {
+                  echo "Error: Failed to download deployment script." | tee /tmp/setup-failed
+                  exit 1
+                }
+
+                chmod +x /tmp/deployment.sh && bash /tmp/deployment.sh || {
+                  echo "Error: Deployment script execution failed." | tee /tmp/setup-failed
+                  exit 1
+                }
+
+                # Marking the setup as complete
+                touch /tmp/setup-finished
+                echo "Setup complete! Keeping container alive."
+                tail -f /dev/null
+              }
+
+              setup
+          readinessProbe:
+            exec:
+              command:
+                - /bin/bash
+                - -c
+                - |
+                  if [ -f /tmp/setup-failed ]; then
+                    echo "Deployment failed."
+                    exit 1
+                  elif [ -f /tmp/setup-finished ]; then
+                    exit 0
+                  else
+                    exit 1
+                  fi
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
+            successThreshold: 1
+          ports:
+            - containerPort: 80
+            - containerPort: 22
+            - containerPort: 8888
+            - containerPort: 7860
+            - containerPort: 3000
+          resources:
+            requests:
+              cpu: 4000m
+              memory: 8192M
+              ephemeral-storage: 10G
+            limits:
+              cpu: 4000m
+              memory: 8192M
+              ephemeral-storage: 10G
+          volumeMounts:
+            - mountPath: /mnt/data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: open-source-template-service
+  labels:
+    app: open-source-template
+spec:
+  selector:
+    app: open-source-template
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 80
+    - name: ssh
+      protocol: TCP
+      port: 22
+      targetPort: 22
+    - name: jupyter
+      protocol: TCP
+      port: 8888
+      targetPort: 8888
+    - name: web-ui
+      protocol: TCP
+      port: 7860
+      targetPort: 7860
+    - name: app
+      protocol: TCP
+      port: 3000
+      targetPort: 3000
+  type: ClusterIP
