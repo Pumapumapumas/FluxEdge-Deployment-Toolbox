@@ -3,25 +3,25 @@
 # display logo
 echo ""
 echo ""
-echo " #####                        #     #"              
+echo ".#####                        #     #"              
 echo "#     # #    # #   # #   #    ##    # ###### ##### " 
 echo "#       #   #   # #   # #     # #   # #        #   "
-echo " #####  ####     #     #      #  #  # #####    #   "
+echo ".#####  ####     #     #      #  #  # #####    #   "
 echo "      # #  #     #     #      #   # # #        #   "
 echo "#     # #   #    #     #      #    ## #        #   "
-echo " #####  #    #   #     #      #     # ######   #   "
+echo ".#####  #    #   #     #      #     # ######   #   "
 echo ""
 echo "System activated..."
 
 # Install Ansible
 echo ""
 echo "Installing Ansible..."
-apt install -y ansible python3-apt
+apt-get install -y ansible python3-apt
 
 # Install Git
 echo ""
 echo "Installing Git..."
-apt install -y git
+apt-get install -y git
 
 # Check if the mount path exists
 echo ""

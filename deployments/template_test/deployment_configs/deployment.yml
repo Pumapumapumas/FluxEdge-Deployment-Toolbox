@@ -28,30 +28,68 @@ spec:
             - -c
             - |
               setup() {
-                echo "Updating system and installing dependencies..."
-                apt-get -y update && apt-get -y upgrade && apt-get -y install curl vim git || {
-                  echo "Error: Failed to install dependencies." | tee /tmp/setup-failed
-                  exit 1
-                }
+                echo "Preventing tzdata prompts..."
+                export DEBIAN_FRONTEND=noninteractive
+                echo "tzdata tzdata/Areas select America" | debconf-set-selections
+                echo "tzdata tzdata/Zones/America select New_York" | debconf-set-selections
+                ln -fs /usr/share/zoneinfo/America/New_York /etc/localtime
+                dpkg-reconfigure -f noninteractive tzdata
 
-                echo "Downloading deployment script..."
-                curl -o /tmp/deployment.sh https://raw.githubusercontent.com/helloskyy-io/FluxEdge-Deployment-Toolbox/refs/heads/main/deployments/template_test/deployment_configs/deployment.sh || {
-                  echo "Error: Failed to download deployment script." | tee /tmp/setup-failed
-                  exit 1
-                }
+                echo "Starting setup process with a timeout..."
+                (
+                  # Run the setup process with a timeout of 5 minutes (300 seconds)
+                  (
+                    sleep 90
+                    echo "Error: Setup process timed out." | tee /tmp/setup-failed
+                    exit 1
+                  ) &
 
-                chmod +x /tmp/deployment.sh && bash /tmp/deployment.sh || {
-                  echo "Error: Deployment script execution failed." | tee /tmp/setup-failed
-                  exit 1
-                }
+                  # Store the timeout process PID
+                  TIMEOUT_PID=$!
 
-                # Marking the setup as complete
-                touch /tmp/setup-finished
-                echo "Setup complete! Keeping container alive."
-                tail -f /dev/null
-              }
+                  # Run the setup tasks
+                  {
+                    echo "Updating system and installing dependencies..."
+                    apt-get -y update && apt-get -y upgrade && apt-get -y install curl vim git tzdata || {
+                      echo "Error: Failed to install dependencies." | tee /tmp/setup-failed
+                      kill $TIMEOUT_PID
+                      exit 1
+                    }
 
+                    # Simulate a long-running or hanging process for testing (dont leave this on!)
+                    echo "Simulating a process that never exits..."
+                    sleep infinity
+                    }
+
+                    echo "Downloading deployment script..."
+                    curl -o /tmp/deployment.sh https://raw.githubusercontent.com/helloskyy-io/FluxEdge-Deployment-Toolbox/refs/heads/main/deployments/template_test/deployment_configs/deployment.sh || {
+                      echo "Error: Failed to download deployment script." | tee /tmp/setup-failed
+                      kill $TIMEOUT_PID
+                      exit 1
+                    }
+
+                    chmod +x /tmp/deployment.sh && bash /tmp/deployment.sh || {
+                      echo "Error: Deployment script execution failed." | tee /tmp/setup-failed
+                      kill $TIMEOUT_PID
+                      exit 1
+                    }
+
+                    # Marking the setup as complete
+                    touch /tmp/setup-finished
+                    echo "Setup complete!"
+                    kill $TIMEOUT_PID
+                  } &
+                  
+                  # Wait for process to complete
+                  wait $!
+                )
+              }  
+
+              # Execute the setup function after defining it
               setup
+              
+              # Keep container alive
+              tail -f /dev/null
           readinessProbe:
             exec:
               command:
@@ -68,7 +106,7 @@ spec:
                   fi
             initialDelaySeconds: 5
             periodSeconds: 10
-            failureThreshold: 3
+            failureThreshold: 6
             successThreshold: 1
           ports:
             - containerPort: 80
