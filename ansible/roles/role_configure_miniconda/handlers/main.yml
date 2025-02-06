@@ -1,0 +1,3 @@
+---
+- name: Reload shell environment
+  command: source /etc/profile

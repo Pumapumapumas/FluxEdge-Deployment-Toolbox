@@ -1,19 +1,35 @@
 ---
 # environment_template.yml Playbook
 # This playbook calls roles as necessary to configure the packages and dependencies
-# necessary to create a base container environment for the Open Source Deployment framework.
+# necessary to create a template container environment for the Open Source Deployment framework.
 
-- name: Configure FluxEdge AI Container Environment
+- name: Configure FluxEdge Container Environment
   hosts: localhost
   gather_facts: yes
 
+  # these are global vars that apply to more than one deployment
   vars_files:
-    - ../vars/global.yml  # Include global variables if necessary
+    - "{{ playbook_dir }}/vars/global.yml 
 
+  # deployment specific vars
   vars:
+    apt_packages:
+      - nano
+      - wget
+      - iputils-ping
+    conda_root: "/opt/miniconda"
+    conda_env_name: "edge-ai"
+    python_version: "3.10"
+    conda_packages:
+      - numpy
+      - pandas
+      - matplotlib
+      - scikit-learn
+      - jupyter
+      - pytorch
     install_general_packages: true
     install_jupyter: true
-    install_cuda: false  # Change to true if CUDA is needed
+    install_cuda: false 
     cuda_version: "12.4"
     install_pytorch: true
     install_opencv: true
@@ -29,22 +45,31 @@
     - name: Update apt cache
       apt:
         update_cache: yes
-      become: yes
       changed_when: false
 
-    # Task to install python3-pip and other utilities
-    - name: Install pip and other basic utilities
+    # Task to install apt based dependencies
+    - name: Install apt based utilities
       apt:
-        name:
-          - python3      # Install Python 3
-          - python3-pip  # Install pip for Python 3
-          - nano         # Install nano 
-          - wget         # Install wget to pull datasets
-          - iputils-ping # Install basic networking tools
-        state: latest  # Ensures the latest version is installed
-      become: yes
+        name: "{{ apt_packages }}"
+        state: latest  # Ensures the latest version is installed if not otherwise specified
 
-    # Testing complete!
+  roles:
+
+    # install and configure Miniconda
+    - role: role_configure_miniconda  # Calls our new role
+      vars:
+        conda_root: "{{ conda_root }}"
+        conda_env_name: "{{ conda_env_name }}"
+        python_version: "{{ python_version }}"
+        conda_packages: "{{ conda_packages }}"
+
+
+    # # Task to install miniconda and configure env
+    # - name: Configure miniconda and configure it
+    #   include_role:
+    #     name: role_configure_miniconda
+    #   vars:
+    #     conda_packages: conda_packages
 
 
     #### from this point down, specific dependancies or versions of packages required by Detectron2 are installed as roles

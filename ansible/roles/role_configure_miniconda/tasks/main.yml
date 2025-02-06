@@ -1,0 +1,46 @@
+---
+- name: Ensure dependencies are installed
+  apt:
+    name:
+      - wget
+      - bzip2
+    state: present
+  become: yes
+
+- name: Check if Miniconda is already installed
+  stat:
+    path: "{{ conda_root }}/bin/conda"
+  register: conda_installed
+
+- name: Download Miniconda installer
+  get_url:
+    url: "https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh"
+    dest: "/tmp/miniconda.sh"
+    mode: '0755'
+  when: not conda_installed.stat.exists
+
+- name: Install Miniconda
+  command: bash /tmp/miniconda.sh -b -p {{ conda_root }}
+  when: not conda_installed.stat.exists
+
+- name: Ensure Conda is in the PATH
+  lineinfile:
+    path: "/etc/profile.d/conda.sh"
+    line: "export PATH={{ conda_root }}/bin:$PATH"
+    create: yes
+    mode: '0644'
+
+- name: Initialize Conda for Bash
+  shell: "{{ conda_root }}/bin/conda init bash"
+
+- name: Check if Conda environment exists
+  command: "{{ conda_root }}/bin/conda env list"
+  register: conda_envs
+  changed_when: false
+
+- name: Create Conda environment if not exists
+  command: "{{ conda_root }}/bin/conda create -y -n {{ conda_env_name }} python={{ python_version }}"
+  when: "conda_env_name not in conda_envs.stdout"
+
+- name: Install Python dependencies inside Conda environment
+  command: "{{ conda_root }}/bin/conda install -y -n {{ conda_env_name }} {{ conda_packages | join(' ') }}"

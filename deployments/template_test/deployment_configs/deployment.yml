@@ -31,10 +31,10 @@ spec:
               ## 📝 Developer Configuration Section ##
               ########################################
 
-              ### Modify these variables to easily adjust configuration settings when developing deployments ###
+              ### Modify these variables to easily adjust configuration settings when developing new deployments ###
 
               # Ansible Configuration
-              ANSIBLE_PLAYBOOK="environment_template.yaml"  # Name of the Ansible playbook (edit per deployment!)
+              ANSIBLE_PLAYBOOK="environment_template.yml"  # Name of the Ansible playbook (edit per deployment!)
               ANSIBLE_PLAYBOOK_PATH="/mnt/data/FluxEdge-Deployment-Toolbox/ansible/playbooks/$ANSIBLE_PLAYBOOK"  # Full path (auto-generated)
 
               # Watchdog Configuration
@@ -69,7 +69,7 @@ spec:
 
                   echo "Updating system and installing dependencies..." | tee -a $SETUP_LOG
                   export DEBIAN_FRONTEND=noninteractive
-                  apt-get -y update && apt-get -y upgrade && apt-get -y install tzdata curl vim git ansible python3-apt 2>&1 | tee -a $SETUP_LOG || {
+                  apt-get -y update && apt-get -y upgrade && apt-get -y install tzdata curl vim git ansible 2>&1 | tee -a $SETUP_LOG || {
                     echo "❌ ERROR: Failed to install dependencies." | tee -a /tmp/setup-failed
                     kill $TIMEOUT_PID
                     exit 1
