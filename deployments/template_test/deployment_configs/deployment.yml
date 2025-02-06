@@ -34,14 +34,14 @@ spec:
               ### Modify these variables to easily adjust configuration settings when developing deployments ###
 
               # Ansible Configuration
-              ANSIBLE_PLAYBOOK="environment_template.yml"  # Name of the Ansible playbook (edit per deployment!)
+              ANSIBLE_PLAYBOOK="environment_template.yaml"  # Name of the Ansible playbook (edit per deployment!)
               ANSIBLE_PLAYBOOK_PATH="/mnt/data/FluxEdge-Deployment-Toolbox/ansible/playbooks/$ANSIBLE_PLAYBOOK"  # Full path (auto-generated)
 
               # Watchdog Configuration
               WATCHDOG_TIMEOUT=90  # ⏳ Maximum time (seconds) before watchdog forcefully kills setup (edit per deployment!)
               SETUP_LOG="/tmp/setup.log"  # 📝 Log file for additional debugging
               
-              # Readiness Probe Configuration
+              # Readiness Probe Configuration (the below settings do not currently work without ArgoCD implementation)
               READINESS_INITIAL_DELAY=5  # ⏳ Time before the first readiness check (seconds)
               READINESS_PERIOD=10  # 🔄 Interval between readiness checks (seconds)
               READINESS_FAILURE_THRESHOLD=6  # ❌ Max failed checks before marking as failed (edit this to change total wait time!!!)
@@ -66,15 +66,10 @@ spec:
                 
                 # 🏗️ Begin setup tasks
                 {
-                  echo "Preventing tzdata prompts..." | tee -a $SETUP_LOG
-                  export DEBIAN_FRONTEND=noninteractive
-                  echo "tzdata tzdata/Areas select America" | debconf-set-selections
-                  echo "tzdata tzdata/Zones/America select New_York" | debconf-set-selections
-                  ln -fs /usr/share/zoneinfo/America/New_York /etc/localtime
-                  dpkg-reconfigure -f noninteractive tzdata
 
                   echo "Updating system and installing dependencies..." | tee -a $SETUP_LOG
-                  apt-get -y update && apt-get -y upgrade && apt-get -y install curl vim git tzdata ansible python3-apt 2>&1 | tee -a $SETUP_LOG || {
+                  export DEBIAN_FRONTEND=noninteractive
+                  apt-get -y update && apt-get -y upgrade && apt-get -y install tzdata curl vim git ansible python3-apt 2>&1 | tee -a $SETUP_LOG || {
                     echo "❌ ERROR: Failed to install dependencies." | tee -a /tmp/setup-failed
                     kill $TIMEOUT_PID
                     exit 1
@@ -91,7 +86,7 @@ spec:
                   # Clone Open Source deployment repository
                   if [ ! -d "/mnt/data/FluxEdge-Deployment-Toolbox" ]; then
                       echo "Cloning FluxEdge-Deployment-Toolbox..." | tee -a $SETUP_LOG
-                      git clone https://github.com/helloskyy-io/FluxEdge-Deployment-Toolbox /mnt/data 2>&1 | tee -a $SETUP_LOG
+                      git clone https://github.com/helloskyy-io/FluxEdge-Deployment-Toolbox /mnt/data/FluxEdge-Deployment-Toolbox 2>&1 | tee -a $SETUP_LOG
                   else
                       echo "Repository already exists in /mnt/data. Pulling latest changes..." | tee -a $SETUP_LOG
                       cd /mnt/data/FluxEdge-Deployment-Toolbox && git pull 2>&1 | tee -a $SETUP_LOG
@@ -135,10 +130,10 @@ spec:
                   else
                     exit 1
                   fi
-            initialDelaySeconds: $READINESS_INITIAL_DELAY
-            periodSeconds: $READINESS_PERIOD
-            failureThreshold: $READINESS_FAILURE_THRESHOLD
-            successThreshold: $READINESS_SUCCESS_THRESHOLD
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 6
+            successThreshold: 1
           ports:
             - containerPort: 80
             - containerPort: 22
