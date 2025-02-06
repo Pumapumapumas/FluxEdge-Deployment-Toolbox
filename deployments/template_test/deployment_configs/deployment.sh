@@ -7,7 +7,7 @@ echo ".#####                        #     #"
 echo "#     # #    # #   # #   #    ##    # ###### ##### " 
 echo "#       #   #   # #   # #     # #   # #        #   "
 echo ".#####  ####     #     #      #  #  # #####    #   "
-echo "      # #  #     #     #      #   # # #        #   "
+echo ".     # #  #     #     #      #   # # #        #   "
 echo "#     # #   #    #     #      #    ## #        #   "
 echo ".#####  #    #   #     #      #     # ######   #   "
 echo ""
@@ -17,11 +17,6 @@ echo "System activated..."
 echo ""
 echo "Installing Ansible..."
 apt-get install -y ansible python3-apt
-
-# Install Git
-echo ""
-echo "Installing Git..."
-apt-get install -y git
 
 # Check if the mount path exists
 echo ""

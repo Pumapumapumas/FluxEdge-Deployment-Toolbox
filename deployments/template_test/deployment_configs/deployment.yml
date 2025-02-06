@@ -27,69 +27,100 @@ spec:
           args:
             - -c
             - |
+              ########################################
+              ## 📝 Developer Configuration Section ##
+              ########################################
+
+              ### Modify these variables to easily adjust configuration settings when developing deployments ###
+
+              # Ansible Configuration
+              ANSIBLE_PLAYBOOK="environment_template.yml"  # Name of the Ansible playbook (edit per deployment!)
+              ANSIBLE_PLAYBOOK_PATH="/mnt/data/FluxEdge-Deployment-Toolbox/ansible/playbooks/$ANSIBLE_PLAYBOOK"  # Full path (auto-generated)
+
+              # Watchdog Configuration
+              WATCHDOG_TIMEOUT=90  # ⏳ Maximum time (seconds) before watchdog forcefully kills setup (edit per deployment!)
+              SETUP_LOG="/tmp/setup.log"  # 📝 Log file for additional debugging
+              
+              # Readiness Probe Configuration
+              READINESS_INITIAL_DELAY=5  # ⏳ Time before the first readiness check (seconds)
+              READINESS_PERIOD=10  # 🔄 Interval between readiness checks (seconds)
+              READINESS_FAILURE_THRESHOLD=6  # ❌ Max failed checks before marking as failed (edit this to change total wait time!!!)
+              READINESS_SUCCESS_THRESHOLD=1  # ✅ Required successful check count to mark as ready
+
+              ########################################
+              ##### End Developer Configuration ######
+              ########################################
+
               setup() {
-                echo "Preventing tzdata prompts..."
-                export DEBIAN_FRONTEND=noninteractive
-                echo "tzdata tzdata/Areas select America" | debconf-set-selections
-                echo "tzdata tzdata/Zones/America select New_York" | debconf-set-selections
-                ln -fs /usr/share/zoneinfo/America/New_York /etc/localtime
-                dpkg-reconfigure -f noninteractive tzdata
+                echo "Starting setup process with a watchdog timeout of $WATCHDOG_TIMEOUT seconds..."
+                echo "Logs will be stored in $SETUP_LOG"
 
-                echo "Starting setup process with a timeout..."
+                # 🛑 Start a watchdog process to terminate stuck deployments
                 (
-                  # Run the setup process with a timeout of 5 minutes (300 seconds)
-                  (
-                    sleep 90
-                    echo "Error: Setup process timed out." | tee /tmp/setup-failed
-                    exit 1
-                  ) &
+                  sleep $WATCHDOG_TIMEOUT
+                  echo "❌ ERROR: Setup process timed out after $WATCHDOG_TIMEOUT seconds." | tee /tmp/setup-failed
+                  pkill -P $$  # Kill all child processes
+                  exit 1
+                ) &
+                TIMEOUT_PID=$!  # Store the watchdog process ID
+                
+                # 🏗️ Begin setup tasks
+                {
+                  echo "Preventing tzdata prompts..." | tee -a $SETUP_LOG
+                  export DEBIAN_FRONTEND=noninteractive
+                  echo "tzdata tzdata/Areas select America" | debconf-set-selections
+                  echo "tzdata tzdata/Zones/America select New_York" | debconf-set-selections
+                  ln -fs /usr/share/zoneinfo/America/New_York /etc/localtime
+                  dpkg-reconfigure -f noninteractive tzdata
 
-                  # Store the timeout process PID
-                  TIMEOUT_PID=$!
-
-                  # Run the setup tasks
-                  {
-                    echo "Updating system and installing dependencies..."
-                    apt-get -y update && apt-get -y upgrade && apt-get -y install curl vim git tzdata || {
-                      echo "Error: Failed to install dependencies." | tee /tmp/setup-failed
-                      kill $TIMEOUT_PID
-                      exit 1
-                    }
-
-                    # Simulate a long-running or hanging process for testing (dont leave this on!)
-                    echo "Simulating a process that never exits..."
-                    sleep infinity
-                    }
-
-                    echo "Downloading deployment script..."
-                    curl -o /tmp/deployment.sh https://raw.githubusercontent.com/helloskyy-io/FluxEdge-Deployment-Toolbox/refs/heads/main/deployments/template_test/deployment_configs/deployment.sh || {
-                      echo "Error: Failed to download deployment script." | tee /tmp/setup-failed
-                      kill $TIMEOUT_PID
-                      exit 1
-                    }
-
-                    chmod +x /tmp/deployment.sh && bash /tmp/deployment.sh || {
-                      echo "Error: Deployment script execution failed." | tee /tmp/setup-failed
-                      kill $TIMEOUT_PID
-                      exit 1
-                    }
-
-                    # Marking the setup as complete
-                    touch /tmp/setup-finished
-                    echo "Setup complete!"
+                  echo "Updating system and installing dependencies..." | tee -a $SETUP_LOG
+                  apt-get -y update && apt-get -y upgrade && apt-get -y install curl vim git tzdata ansible python3-apt 2>&1 | tee -a $SETUP_LOG || {
+                    echo "❌ ERROR: Failed to install dependencies." | tee -a /tmp/setup-failed
                     kill $TIMEOUT_PID
-                  } &
-                  
-                  # Wait for process to complete
-                  wait $!
-                )
-              }  
+                    exit 1
+                  }
 
-              # Execute the setup function after defining it
+                  # Check if the mount path exists
+                  echo "Checking for external mount path..." | tee -a $SETUP_LOG
+                  if [ ! -d "/mnt/data" ]; then
+                      echo "❌ ERROR: Mount path /mnt/data does not exist. Deployment cannot continue." | tee -a /tmp/setup-failed
+                      kill $TIMEOUT_PID
+                      exit 1
+                  fi
+
+                  # Clone Open Source deployment repository
+                  if [ ! -d "/mnt/data/FluxEdge-Deployment-Toolbox" ]; then
+                      echo "Cloning FluxEdge-Deployment-Toolbox..." | tee -a $SETUP_LOG
+                      git clone https://github.com/helloskyy-io/FluxEdge-Deployment-Toolbox /mnt/data 2>&1 | tee -a $SETUP_LOG
+                  else
+                      echo "Repository already exists in /mnt/data. Pulling latest changes..." | tee -a $SETUP_LOG
+                      cd /mnt/data/FluxEdge-Deployment-Toolbox && git pull 2>&1 | tee -a $SETUP_LOG
+                  fi
+
+                  # ✅ Run Ansible Playbook
+                  echo "Running Ansible Playbook: $ANSIBLE_PLAYBOOK_PATH" | tee -a $SETUP_LOG
+                  ansible-playbook -i localhost, -c local "$ANSIBLE_PLAYBOOK_PATH" 2>&1 | tee -a $SETUP_LOG || {
+                    echo "❌ ERROR: Ansible playbook execution failed." | tee -a /tmp/setup-failed
+                    kill $TIMEOUT_PID
+                    exit 1
+                  }
+
+                  # ✅ If setup finishes successfully, kill watchdog and mark as ready
+                  kill $TIMEOUT_PID
+                  touch /tmp/setup-finished
+                  echo "✅ Setup completed successfully in under $WATCHDOG_TIMEOUT seconds!" | tee -a $SETUP_LOG
+                } &
+                
+                # 🚀 Wait for setup to complete
+                wait $!
+              }
+
+              # Execute the setup function
               setup
               
               # Keep container alive
               tail -f /dev/null
+
           readinessProbe:
             exec:
               command:
@@ -104,10 +135,10 @@ spec:
                   else
                     exit 1
                   fi
-            initialDelaySeconds: 5
-            periodSeconds: 10
-            failureThreshold: 6
-            successThreshold: 1
+            initialDelaySeconds: $READINESS_INITIAL_DELAY
+            periodSeconds: $READINESS_PERIOD
+            failureThreshold: $READINESS_FAILURE_THRESHOLD
+            successThreshold: $READINESS_SUCCESS_THRESHOLD
           ports:
             - containerPort: 80
             - containerPort: 22
