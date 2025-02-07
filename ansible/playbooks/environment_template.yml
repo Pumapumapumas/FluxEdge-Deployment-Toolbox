@@ -40,20 +40,6 @@
         update_cache: yes
       changed_when: false
 
-    # Task to install apt based dependencies
-    - name: Install apt based utilities
-      apt:
-        name: "{{ apt_packages }}"
-        state: latest
-      register: apt_install_result  # Capture output for debugging
-      retries: 3
-      delay: 5
-      ignore_errors: yes  # Avoid breaking the playbook if a package fails
-
-    - name: Debug apt installation result
-      debug:
-        var: apt_install_result
-
     - name: Debug apt_packages variable
       debug:
         var: apt_packages
