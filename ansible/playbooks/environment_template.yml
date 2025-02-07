@@ -51,8 +51,8 @@
 
     # install apt package list from vars
     - role: configure_apt_packages
-      vars:
-        apt_packages: "{{ apt_packages }}"
+      # vars:
+      #   apt_packages: "{{ apt_packages }}"
 
   #   # install and configure Miniconda
   #   - role: configure_miniconda 
