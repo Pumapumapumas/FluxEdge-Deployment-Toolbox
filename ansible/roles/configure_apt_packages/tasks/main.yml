@@ -1,7 +1,7 @@
 ---
 - name: Debug apt_packages inside role
   debug:
-    var: configure_apt_packages_packages
+    var: configure_apt_packages_apt_packages
 
 - name: Install apt-based dependencies
   apt:

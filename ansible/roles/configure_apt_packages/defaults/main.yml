@@ -1,1 +1,5 @@
-
+---
+apt_packages:
+  - nano
+  - wget
+  - iputils-ping
