@@ -54,6 +54,10 @@
       debug:
         var: apt_install_result
 
+    - name: Debug apt_packages variable
+      debug:
+        var: apt_packages
+
 
   roles:
 
