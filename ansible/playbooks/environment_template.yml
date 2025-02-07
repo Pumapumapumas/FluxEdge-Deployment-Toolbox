@@ -55,9 +55,9 @@
         var: apt_install_result
 
 
-  # roles:
+  roles:
 
-  #   #### this section of code utilizes roles as generic reusable objects, requires vars ####
+    #### this section of code utilizes roles as generic reusable objects, requires vars ####
 
     # install apt package list from vars
     - role: install_apt_packages
