@@ -57,7 +57,7 @@
   roles:
 
     # install and configure Miniconda
-    - roles: role_configure_miniconda  # Calls our new role
+    - role: role_configure_miniconda 
       vars:
         conda_root: "{{ conda_root }}"
         conda_env_name: "{{ conda_env_name }}"

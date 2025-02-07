@@ -42,7 +42,7 @@ spec:
               WATCHDOG_TIMEOUT=90  # ⏳ Maximum time (seconds) before watchdog forcefully kills setup (edit per deployment!)
               SETUP_LOG="/tmp/setup.log"  # 📝 Log file for additional debugging
               
-              # Readiness Probe Configuration (the below settings do not currently work without ArgoCD implementation)
+              # Readiness Probe Configuration (the below readiness probe settings do not currently work without ArgoCD implementation)
               READINESS_INITIAL_DELAY=5  # ⏳ Time before the first readiness check (seconds)
               READINESS_PERIOD=10  # 🔄 Interval between readiness checks (seconds)
               READINESS_FAILURE_THRESHOLD=6  # ❌ Max failed checks before marking as failed (edit this to change total wait time!!!)
@@ -95,7 +95,7 @@ spec:
 
                   # ✅ Run Ansible Playbook with explicit config path
                   echo "Running Ansible Playbook: $ANSIBLE_PLAYBOOK_PATH with config: $ANSIBLE_CONFIG_PATH" | tee -a $SETUP_LOG
-                  ANSIBLE_CONFIG="$ANSIBLE_CONFIG_PATH" ansible-playbook -i localhost, -c local --config "$ANSIBLE_CONFIG_PATH" "$ANSIBLE_PLAYBOOK_PATH" 2>&1 | tee -a $SETUP_LOG || {
+                  ANSIBLE_CONFIG="$ANSIBLE_CONFIG_PATH" ansible-playbook -i localhost, -c local "$ANSIBLE_PLAYBOOK_PATH" 2>&1 | tee -a $SETUP_LOG || {
                     echo "❌ ERROR: Ansible playbook execution failed." | tee -a /tmp/setup-failed
                     kill $TIMEOUT_PID
                     exit 1
