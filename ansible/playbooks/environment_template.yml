@@ -2,7 +2,7 @@
 # environment_template.yml Playbook
 # This playbook calls roles as necessary to configure the packages and dependencies
 # necessary to create a template container environment for the Open Source Deployment framework.
-# to run locally  "ansible-playbook environment_template.yml -i localhost, -c local -vv"
+# to run locally: ANSIBLE_CONFIG="/mnt/data/FluxEdge-Deployment-Toolbox/ansible/ansible.cfg" ansible-playbook /mnt/data/FluxEdge-Deployment-Toolbox/ansible/playbooks/environment_template.yml -i localhost, -c local -vv
 
 - name: Configure FluxEdge Container Environment
   hosts: localhost
@@ -40,7 +40,7 @@
 
   tasks:
 
-    #### this section of code only installs general packages at their "latest" version ####
+    #### this section of code handles the apt packages defined in vars ####
 
     # Task to update the apt cache
     - name: Update apt cache
@@ -52,17 +52,28 @@
     - name: Install apt based utilities
       apt:
         name: "{{ apt_packages }}"
-        state: latest  # Ensures the latest version is installed if not otherwise specified
+        state: latest
+      register: apt_install_result  # Capture output for debugging
+      retries: 3
+      delay: 5
+      ignore_errors: yes  # Avoid breaking the playbook if a package fails
 
-  roles:
+    - name: Debug apt installation result
+      debug:
+        var: apt_install_result
 
-    # install and configure Miniconda
-    - role: role_configure_miniconda 
-      vars:
-        conda_root: "{{ conda_root }}"
-        conda_env_name: "{{ conda_env_name }}"
-        python_version: "{{ python_version }}"
-        conda_packages: "{{ conda_packages }}"
+
+  # roles:
+
+  #   #### this section of code utilizes roles as generic reusable objects, requires vars ####
+
+  #   # install and configure Miniconda
+  #   - role: configure_miniconda 
+  #     vars:
+  #       conda_root: "{{ conda_root }}"
+  #       conda_env_name: "{{ conda_env_name }}"
+  #       python_version: "{{ python_version }}"
+  #       conda_packages: "{{ conda_packages }}"
 
 
     # # Task to install miniconda and configure env
