@@ -5,7 +5,7 @@
 
 - name: Install apt-based dependencies
   apt:
-    name: "{{ apt_packages | list }}"
+    name: "{{ apt_packages }}"
     state: latest
   register: apt_install_result
   retries: 3
