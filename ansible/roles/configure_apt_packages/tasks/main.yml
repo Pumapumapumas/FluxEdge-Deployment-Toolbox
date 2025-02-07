@@ -1,4 +1,8 @@
 ---
+- name: Debug apt_packages inside role
+  debug:
+    var: apt_packages
+
 - name: Install apt-based dependencies
   apt:
     name: "{{ apt_packages | list }}"
