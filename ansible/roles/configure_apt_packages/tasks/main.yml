@@ -1,11 +1,11 @@
 ---
 - name: Debug apt_packages inside role
   debug:
-    var: apt_packages
+    var: configure_apt_packages_packages
 
 - name: Install apt-based dependencies
   apt:
-    name: "{{ apt_packages }}"
+    name: "{{ configure_apt_packages_packages }}"
     state: latest
   register: apt_install_result
   retries: 3
