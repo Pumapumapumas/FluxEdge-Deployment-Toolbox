@@ -28,11 +28,11 @@
       - scikit-learn
       - jupyter
       - pytorch
-      
+
 
   tasks:
 
-    #### this section of code handles the apt packages defined in vars ####
+    #### this section of code handles only tasks that are not handled by roles ####
 
     # Task to update the apt cache
     - name: Update apt cache
@@ -58,6 +58,11 @@
   # roles:
 
   #   #### this section of code utilizes roles as generic reusable objects, requires vars ####
+
+    # install apt package list from vars
+    - role: install_apt_packages
+      vars:
+        apt_packages: "{{ apt_packages }}"
 
   #   # install and configure Miniconda
   #   - role: configure_miniconda 

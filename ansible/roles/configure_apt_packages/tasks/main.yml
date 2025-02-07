@@ -1,0 +1,13 @@
+---
+- name: Install apt-based dependencies
+  apt:
+    name: "{{ apt_packages }}"
+    state: latest
+  register: apt_install_result
+  retries: 3
+  delay: 5
+  ignore_errors: yes  # Prevent breaking the playbook if a package fails
+
+- name: Debug apt installation result
+  debug:
+    var: apt_install_result
