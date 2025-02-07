@@ -36,6 +36,7 @@ spec:
               # Ansible Configuration
               ANSIBLE_PLAYBOOK="environment_template.yml"  # Name of the Ansible playbook (edit per deployment!)
               ANSIBLE_PLAYBOOK_PATH="/mnt/data/FluxEdge-Deployment-Toolbox/ansible/playbooks/$ANSIBLE_PLAYBOOK"  # Full path (auto-generated)
+              ANSIBLE_CONFIG_PATH="/mnt/data/FluxEdge-Deployment-Toolbox/ansible/ansible.cfg"
 
               # Watchdog Configuration
               WATCHDOG_TIMEOUT=90  # ⏳ Maximum time (seconds) before watchdog forcefully kills setup (edit per deployment!)
@@ -92,9 +93,9 @@ spec:
                       cd /mnt/data/FluxEdge-Deployment-Toolbox && git pull 2>&1 | tee -a $SETUP_LOG
                   fi
 
-                  # ✅ Run Ansible Playbook
-                  echo "Running Ansible Playbook: $ANSIBLE_PLAYBOOK_PATH" | tee -a $SETUP_LOG
-                  ansible-playbook -i localhost, -c local "$ANSIBLE_PLAYBOOK_PATH" 2>&1 | tee -a $SETUP_LOG || {
+                  # ✅ Run Ansible Playbook with explicit config path
+                  echo "Running Ansible Playbook: $ANSIBLE_PLAYBOOK_PATH with config: $ANSIBLE_CONFIG_PATH" | tee -a $SETUP_LOG
+                  ANSIBLE_CONFIG="$ANSIBLE_CONFIG_PATH" ansible-playbook -i localhost, -c local --config "$ANSIBLE_CONFIG_PATH" "$ANSIBLE_PLAYBOOK_PATH" 2>&1 | tee -a $SETUP_LOG || {
                     echo "❌ ERROR: Ansible playbook execution failed." | tee -a /tmp/setup-failed
                     kill $TIMEOUT_PID
                     exit 1
