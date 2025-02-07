@@ -8,11 +8,11 @@
   hosts: localhost
   gather_facts: yes
 
-  # these are global vars that apply to more than one deployment
+  # these are global vars that apply to more than just this deployment
   vars_files:
-    - "{{ lookup('pipe', 'pwd') }}/vars/global.yml" 
+    - "{{ playbook_dir }}/../vars/global.yml"
 
-  # deployment specific vars
+  # deployment specific vars (apply only to this deployment)
   vars:
     apt_packages:
       - nano
