@@ -28,15 +28,7 @@
       - scikit-learn
       - jupyter
       - pytorch
-    install_general_packages: true
-    install_jupyter: true
-    install_cuda: false 
-    cuda_version: "12.4"
-    install_pytorch: true
-    install_opencv: true
-    install_cython: true
-    install_pycoco: true
-    install_detectron2: true
+      
 
   tasks:
 
