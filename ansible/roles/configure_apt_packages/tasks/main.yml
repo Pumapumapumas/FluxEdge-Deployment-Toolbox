@@ -1,17 +1,23 @@
 ---
-- name: Debug apt_packages inside role
+- name: Debug apt_packages inside role # verify the package list is available
   debug:
     var: configure_apt_packages_apt_packages
+  when: ansible_verbosity >= 2  # Only output when running with -vv
 
 - name: Install apt-based dependencies
   apt:
-    name: "{{ configure_apt_packages_packages }}"
+    name: "{{ configure_apt_packages_apt_packages }}"
     state: latest
   register: apt_install_result
   retries: 3
   delay: 5
-  ignore_errors: yes  # Prevent breaking the playbook if a package fails
+  until: apt_install_result is success or
+         ("Could not resolve" not in apt_install_result.stderr and
+          "Temporary failure resolving" not in apt_install_result.stderr)
+  failed_when: not dev_mode and apt_install_result.rc != 0  # Fail in production, continue in dev
 
 - name: Debug apt installation result
   debug:
     var: apt_install_result
+  when: ansible_verbosity >= 2  # Only output when running with -vv
+
