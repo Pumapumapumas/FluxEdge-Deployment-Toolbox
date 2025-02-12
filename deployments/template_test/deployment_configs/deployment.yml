@@ -38,6 +38,13 @@ spec:
               ANSIBLE_PLAYBOOK_PATH="/mnt/data/FluxEdge-Deployment-Toolbox/ansible/playbooks/$ANSIBLE_PLAYBOOK"  # Full path (auto-generated)
               ANSIBLE_CONFIG_PATH="/mnt/data/FluxEdge-Deployment-Toolbox/ansible/ansible.cfg"
 
+              # Jupyter Configuration
+              JUPYTER_DEPLOY="true"   # set this to true if you want to add jupyter to the deployment (UI can override option!)
+              JUPYTER_TOKEN="jupyter_test_token"   # in the future the UI will manage or inject this value automagically
+              JUPYTER_ANSIBLE_PLAYBOOK="environment_jupyter.yml"  # Name of the Ansible playbook (edit per deployment!)
+              JUPYTER_ANSIBLE_PLAYBOOK_PATH="/mnt/data/FluxEdge-Deployment-Toolbox/ansible/playbooks/$JUPYTER_ANSIBLE_PLAYBOOK"  # Full path (auto-generated)
+              JUPYTER_ANSIBLE_CONFIG_PATH="/mnt/data/FluxEdge-Deployment-Toolbox/ansible/ansible.cfg"
+
               # Watchdog Configuration
               WATCHDOG_TIMEOUT=90  # ⏳ Maximum time (seconds) before watchdog forcefully kills setup (edit per deployment!)
               SETUP_LOG="/tmp/setup.log"  # 📝 Log file for additional debugging
@@ -100,6 +107,19 @@ spec:
                     kill $TIMEOUT_PID
                     exit 1
                   }
+
+                  # ✅ Run Ansible Jupyter Playbook with explicit config path only if Jupyter flag is set.
+                  if [ "$JUPYTER_DEPLOY" = "true" ]; then
+                    echo "Running Ansible Jupyter Playbook: $JUPYTER_ANSIBLE_PLAYBOOK_PATH with config: $JUPYTER_ANSIBLE_CONFIG_PATH" | tee -a $SETUP_LOG
+                    ANSIBLE_CONFIG="$JUPYTER_ANSIBLE_CONFIG_PATH" ansible-playbook -i localhost, -c local "$JUPYTER_ANSIBLE_PLAYBOOK_PATH" -e "jupyter_token=$JUPYTER_TOKEN" 2>&1 | tee -a $SETUP_LOG || {
+                      echo "❌ ERROR: Jupyter Ansible playbook execution failed." | tee -a /tmp/setup-failed
+                      kill $TIMEOUT_PID
+                      exit 1
+                    }
+                  else
+                    echo "Skipping Jupyter installation as JUPYTER_DEPLOY is set to 'false'." | tee -a $SETUP_LOG
+                  fi
+
 
                   # ✅ If setup finishes successfully, kill watchdog and mark as ready
                   kill $TIMEOUT_PID

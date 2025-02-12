@@ -1,0 +1,29 @@
+---
+- name: Debug Jupyter variables
+  debug:
+    msg: "Installing Jupyter in Conda environment {{ configure_jupyter_jupyter_conda_env }} with token: {{ configure_jupyter_jupyter_password }}"
+  when: ansible_verbosity >= 2
+
+- name: Ensure Jupyter config directory exists
+  file:
+    path: "{{ configure_jupyter_jupyter_config_path }}"
+    state: directory
+    mode: '0700'
+
+- name: Install Jupyter inside Conda environment
+  command: "{{ conda_root }}/bin/conda run -n {{ configure_jupyter_jupyter_conda_env }} -- conda install -y jupyterlab"
+  register: jupyter_install
+  failed_when: not dev_mode and jupyter_install.rc != 0  # Fail in production, continue in dev
+
+- name: Configure Jupyter Notebook with the provided password
+  template:
+    src: "jupyter_notebook_config.py.j2"
+    dest: "{{ configure_jupyter_jupyter_config_path }}/jupyter_notebook_config.py"
+    mode: '0644'
+
+- name: Ensure Jupyter starts at container launch
+  lineinfile:
+    path: "/root/.bashrc"
+    line: "nohup jupyter lab --ip=0.0.0.0 --port=8888 --NotebookApp.token='{{ configure_jupyter_jupyter_password }}' --allow-root > /mnt/data/jupyter.log 2>&1 &"
+    create: yes
+    mode: '0644'

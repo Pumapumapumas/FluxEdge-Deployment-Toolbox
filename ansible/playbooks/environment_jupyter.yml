@@ -1,0 +1,33 @@
+---
+# environment_jupyter.yml Playbook
+# This playbook calls roles as necessary to add Jupyter notebooks to an existing deployment
+
+# to run locally: ANSIBLE_CONFIG="/mnt/data/FluxEdge-Deployment-Toolbox/ansible/ansible.cfg" ansible-playbook /mnt/data/FluxEdge-Deployment-Toolbox/ansible/playbooks/environment_jupyter.yml -i localhost, -c local 
+# to run locally with debug: ANSIBLE_CONFIG="/mnt/data/FluxEdge-Deployment-Toolbox/ansible/ansible.cfg" ansible-playbook /mnt/data/FluxEdge-Deployment-Toolbox/ansible/playbooks/environment_jupyter.yml -i localhost, -c local -vv
+
+
+- name: Install and Configure Jupyter
+  hosts: localhost
+  connection: local
+  gather_facts: no
+
+  # these are global vars that apply to more than just this deployment
+  vars_files:
+    - "{{ playbook_dir }}/../vars/global.yml"
+
+  # deployment specific vars (apply only to this deployment)
+  vars:
+    jupyter_conda_env: "edge-ai"
+    jupyter_password: "{{ jupyter_token }}"  # Passed via `--extra-vars` from kubernetes
+    jupyter_config_path: "/root/.jupyter"
+
+  roles:
+
+    #### this section of code utilizes roles as generic reusable objects, requires vars ####
+
+    # install apt package list from vars
+    - role: configure_jupyter
+      vars:
+        configure_jupyter_jupyter_conda_env: "edge-ai"
+        configure_jupyter_jupyter_password: "{{ jupyter_password }}"
+        configure_jupyter_jupyter_config_path: "/root/.jupyter"

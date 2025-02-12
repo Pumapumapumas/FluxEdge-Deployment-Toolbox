@@ -2,6 +2,7 @@
 # environment_template.yml Playbook
 # This playbook calls roles as necessary to configure the packages and dependencies
 # necessary to create a template container environment for the Open Source Deployment framework.
+
 # to run locally: ANSIBLE_CONFIG="/mnt/data/FluxEdge-Deployment-Toolbox/ansible/ansible.cfg" ansible-playbook /mnt/data/FluxEdge-Deployment-Toolbox/ansible/playbooks/environment_template.yml -i localhost, -c local 
 # to run locally with debug: ANSIBLE_CONFIG="/mnt/data/FluxEdge-Deployment-Toolbox/ansible/ansible.cfg" ansible-playbook /mnt/data/FluxEdge-Deployment-Toolbox/ansible/playbooks/environment_template.yml -i localhost, -c local -vv
 
