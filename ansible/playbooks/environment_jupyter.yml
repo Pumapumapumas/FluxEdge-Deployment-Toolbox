@@ -18,7 +18,7 @@
   # deployment specific vars (apply only to this deployment)
   vars:
     jupyter_conda_env: "edge-ai"
-    jupyter_password: "{{ jupyter_token }}"  # Passed via `--extra-vars` from kubernetes
+    jupyter_password: "{{ jupyter_token | default(omit) }}"  # Passed via `--extra-vars` from kubernetes
     jupyter_config_path: "/root/.jupyter"
 
   roles:
