@@ -17,6 +17,7 @@
 
   # deployment specific vars (apply only to this deployment)
   vars:
+    dev_mode: true  # this keeps Kubernetes from failing when Ansible fails during development
     conda_root: "/opt/miniconda"
     jupyter_conda_env: "edge-ai"
     jupyter_password: "{{ jupyter_token | default(omit) }}"  # Passed via `--extra-vars` from kubernetes
