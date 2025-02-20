@@ -1,0 +1,71 @@
+---
+# environment_timpi_synaptron.yml Playbook
+# This playbook calls roles as necessary to configure the packages and dependencies
+# necessary to create a template container environment for the Open Source Deployment framework.
+
+# to run locally: ANSIBLE_CONFIG="/mnt/data/FluxEdge-Deployment-Toolbox/ansible/ansible.cfg" ansible-playbook /mnt/data/FluxEdge-Deployment-Toolbox/ansible/playbooks/environment_timpi_synaptron.yml -i localhost, -c local 
+# to run locally with debug: ANSIBLE_CONFIG="/mnt/data/FluxEdge-Deployment-Toolbox/ansible/ansible.cfg" ansible-playbook /mnt/data/FluxEdge-Deployment-Toolbox/ansible/playbooks/environment_timpi_synaptron.yml -i localhost, -c local -vv
+
+- name: Configure FluxEdge Container Environment
+  hosts: localhost
+  gather_facts: yes
+
+  # Global variables sourced from Kubernetes environment
+  vars:
+    dev_mode: true  # this keeps Kubernetes from failing when Ansible fails during development
+    apt_packages:
+      - nano
+      - wget
+      - iputils-ping
+
+  tasks:
+
+    #### this section of code handles only tasks that are not handled by roles ####
+
+    # Task to update the apt cache
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+      changed_when: false
+
+    - name: Debug apt_packages variable
+      debug:
+        var: apt_packages
+
+    # Ensure the log directory exists
+    - name: Ensure log directory exists
+      file:
+        path: "{{ GENERAL_LOG_PATH }}"
+        state: directory
+        mode: '0755'
+
+    # Ensure entrypoint script is executable
+    - name: Ensure entrypoint script is executable
+      file:
+        path: /synaptron/entrypoint.sh
+        mode: '0755'
+
+    - name: Execute entrypoint script
+      shell: |
+        echo "Configuring Synaptron..." | tee -a {{ TIMPI_LOG_PATH }}
+        if [ "{{ TIMPI_LOGS_REDIRECT }}" = "true" ]; then
+          /synaptron/entrypoint.sh 2>&1 | tee -a {{ TIMPI_LOG_PATH }}
+          echo "🟢 Wilson AI process started" | tee -a {{ TIMPI_LOG_PATH }}
+        else
+          /synaptron/entrypoint.sh
+          echo "🟢 Wilson AI process started"
+      environment:
+        NAME: "{{ NAME | default('') }}"
+        GUID: "{{ GUID | default('') }}"
+        TIMPI_LOGS_REDIRECT: "{{ TIMPI_LOGS_REDIRECT | default('true') }}"
+        TIMPI_LOG_PATH: "{{ TIMPI_LOG_PATH | default('/mnt/data/logs/timpi-synaptron.log') }}"
+        GENERAL_LOG_PATH: "{{ GENERAL_LOG_PATH | default('/mnt/data/logs') }}"
+
+  roles:
+
+    #### this section of code utilizes roles as generic reusable objects, requires vars ####
+
+    # install apt package list from vars
+    - role: configure_apt_packages
+      vars:
+        configure_apt_packages_apt_packages: "{{ apt_packages }}"
