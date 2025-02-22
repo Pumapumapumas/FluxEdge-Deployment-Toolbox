@@ -1,0 +1,12 @@
+[Unit]
+Description=Uptime Kuma Passive Monitor
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/uptime-monitor.sh
+Restart=always
+User=nobody
+Group=nogroup
+
+[Install]
+WantedBy=multi-user.target

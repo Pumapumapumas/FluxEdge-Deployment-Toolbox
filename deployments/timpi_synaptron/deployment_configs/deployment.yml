@@ -38,7 +38,7 @@ spec:
             limits:
               cpu: 4000m
               memory: 12288M
-              ephemeral-storage: 250G
+              ephemeral-storage: 200G
               nvidia.com/gpu: 1
           volumeMounts:
             - mountPath: /mnt/data

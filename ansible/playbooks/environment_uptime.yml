@@ -1,0 +1,33 @@
+---
+# environment_uptime.yml Playbook
+# This playbook calls roles as necessary to add uptime kuma to an existing deployment
+
+# to run locally: ANSIBLE_CONFIG="/mnt/data/FluxEdge-Deployment-Toolbox/ansible/ansible.cfg" ansible-playbook /mnt/data/FluxEdge-Deployment-Toolbox/ansible/playbooks/environment_uptime.yml -i localhost, -c local 
+# to run locally with debug: ANSIBLE_CONFIG="/mnt/data/FluxEdge-Deployment-Toolbox/ansible/ansible.cfg" ansible-playbook /mnt/data/FluxEdge-Deployment-Toolbox/ansible/playbooks/environment_uptime.yml -i localhost, -c local -vv
+
+
+- name: Install and Configure Uptime Passive Monitor
+  hosts: localhost
+  connection: local
+  gather_facts: no
+
+  # these are global vars that apply to more than just this deployment
+  vars_files:
+    - "{{ playbook_dir }}/../vars/global.yml"
+
+  # deployment specific vars (apply only to this deployment)
+  vars:
+    dev_mode: true  # this keeps Kubernetes from failing when Ansible fails during development
+    uptime_kuma_url: "{{ uptime_token | default('http://192.168.90.103:3001/api/push/VwatnenC8D?status=up&msg=OK&ping=') }}"
+    uptime_kuma_interval: 60  # Send heartbeat every 60 seconds
+
+  roles:
+
+    #### this section of code utilizes roles as generic reusable objects, requires vars ####
+
+    # install apt package list from vars
+    - role: configure_uptime
+      vars:
+        configure_jupyter_jupyter_conda_env: "edge-ai"
+        configure_jupyter_jupyter_password: "{{ jupyter_password }}"
+        configure_jupyter_jupyter_config_path: "/root/.jupyter"

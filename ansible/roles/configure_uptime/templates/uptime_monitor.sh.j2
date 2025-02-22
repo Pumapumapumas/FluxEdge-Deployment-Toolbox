@@ -1,0 +1,8 @@
+#!/bin/bash
+
+UPTIME_KUMA_URL="{{ uptime_kuma_url }}"
+
+while true; do
+    curl -s "$UPTIME_KUMA_URL"
+    sleep {{ uptime_kuma_interval | default(60) }}
+done
