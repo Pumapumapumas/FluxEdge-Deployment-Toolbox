@@ -27,19 +27,18 @@ spec:
               value: ""  # Placeholder, to be set automatically via UI injection
             - name: GUID
               value: ""  # Placeholder, to be set automatically via UI injection
-              
           ports:
             - containerPort: 80
           resources:
             requests:
               cpu: 4000m
               memory: 12288M
-              ephemeral-storage: 200G
+              ephemeral-storage: 180G
             limits:
               cpu: 4000m
               memory: 12288M
-              ephemeral-storage: 200G
-              nvidia.com/gpu: 1
+              ephemeral-storage: 180G
+              nvidia.com/gpu: 1 
           volumeMounts:
             - mountPath: /mnt/data
 ---

@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  generateName: timpi-synaptron-
+  labels:
+    app: timpi-synaptron
+spec:
+  selector:
+    matchLabels:
+      app: timpi-synaptron
+  template:
+    metadata:
+      labels:
+        app: timpi-synaptron
+    spec:
+      dnsPolicy: None
+      dnsConfig:
+        nameservers:
+          - 8.8.8.8
+          - 1.1.1.1
+      containers:
+        - name: timpi-synaptron-1
+          image: timpiltd/timpi-synaptron:latest
+          hostNetwork: true
+          env:
+            - name: NAME
+              value: "Worker-1"
+            - name: GUID
+              value: "12345-Worker-1"
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: 4000m
+              memory: 12288M
+              ephemeral-storage: 100G
+            limits:
+              cpu: 4000m
+              memory: 12288M
+              ephemeral-storage: 100G
+          volumeMounts:
+            - mountPath: /mnt/data
+          
+        - name: timpi-synaptron-2
+          image: timpiltd/timpi-synaptron:latest
+          hostNetwork: true
+          env:
+            - name: NAME
+              value: "Worker-2"
+            - name: GUID
+              value: "67890-Worker-2"
+          ports:
+            - containerPort: 81
+          resources:
+            requests:
+              cpu: 4000m
+              memory: 12288M
+              ephemeral-storage: 100G
+            limits:
+              cpu: 4000m
+              memory: 12288M
+              ephemeral-storage: 100G
+          volumeMounts:
+            - mountPath: /mnt/data
+      resources:
+        limits:
+          nvidia.com/gpu: 1  # ✅ Request GPU at the POD level, not per container!
+

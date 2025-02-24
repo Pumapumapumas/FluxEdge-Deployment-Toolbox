@@ -48,7 +48,7 @@ spec:
               # Uptime Kuma Monitoring
               UPTIME_DEPLOY=true
               UPTIME_TOKEN="http://192.168.90.103:3001/api/push/VwatnenC8D?status=up&msg=OK&ping="  # in the future this would be injected from the UI
-              UPTIME_ANSIBLE_PLAYBOOK="environment_ansible.yml"  # Name of the Ansible playbook (edit per deployment!)
+              UPTIME_ANSIBLE_PLAYBOOK="environment_uptime.yml"  # Name of the Ansible playbook (edit per deployment!)
               UPTIME_ANSIBLE_PLAYBOOK_PATH="/mnt/data/FluxEdge-Deployment-Toolbox/ansible/playbooks/$UPTIME_ANSIBLE_PLAYBOOK"  # Full path (auto-generated)
               UPTIME_ANSIBLE_CONFIG_PATH="/mnt/data/FluxEdge-Deployment-Toolbox/ansible/ansible.cfg"
 
@@ -175,10 +175,7 @@ spec:
             successThreshold: 1
           ports:
             - containerPort: 80
-            - containerPort: 22
             - containerPort: 8888
-            - containerPort: 7860
-            - containerPort: 3000
           resources:
             requests:
               cpu: 4000m
@@ -205,20 +202,8 @@ spec:
       protocol: TCP
       port: 80
       targetPort: 80
-    - name: ssh
-      protocol: TCP
-      port: 22
-      targetPort: 22
     - name: jupyter
       protocol: TCP
       port: 8888
       targetPort: 8888
-    - name: web-ui
-      protocol: TCP
-      port: 7860
-      targetPort: 7860
-    - name: app
-      protocol: TCP
-      port: 3000
-      targetPort: 3000
   type: ClusterIP

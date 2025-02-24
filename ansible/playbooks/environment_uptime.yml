@@ -18,7 +18,7 @@
   # deployment specific vars (apply only to this deployment)
   vars:
     dev_mode: true  # this keeps Kubernetes from failing when Ansible fails during development
-    uptime_kuma_url: "{{ uptime_token | default('http://192.168.90.103:3001/api/push/VwatnenC8D?status=up&msg=OK&ping=') }}"
+    uptime_kuma_url: "{{ uptime_token | default('http://192.168.90.103:3001/api/push/xka3Jm7DFj?status=up&msg=OK&ping=') }}"
     uptime_kuma_interval: 60  # Send heartbeat every 60 seconds
 
   roles:
