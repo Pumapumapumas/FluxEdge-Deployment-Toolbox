@@ -45,12 +45,7 @@ spec:
               JUPYTER_ANSIBLE_PLAYBOOK_PATH="/mnt/data/FluxEdge-Deployment-Toolbox/ansible/playbooks/$JUPYTER_ANSIBLE_PLAYBOOK"  # Full path (auto-generated)
               JUPYTER_ANSIBLE_CONFIG_PATH="/mnt/data/FluxEdge-Deployment-Toolbox/ansible/ansible.cfg"
 
-              # Uptime Kuma Monitoring
-              UPTIME_DEPLOY=true
-              UPTIME_TOKEN="http://192.168.90.103:3001/api/push/VwatnenC8D?status=up&msg=OK&ping="  # in the future this would be injected from the UI
-              UPTIME_ANSIBLE_PLAYBOOK="environment_uptime.yml"  # Name of the Ansible playbook (edit per deployment!)
-              UPTIME_ANSIBLE_PLAYBOOK_PATH="/mnt/data/FluxEdge-Deployment-Toolbox/ansible/playbooks/$UPTIME_ANSIBLE_PLAYBOOK"  # Full path (auto-generated)
-              UPTIME_ANSIBLE_CONFIG_PATH="/mnt/data/FluxEdge-Deployment-Toolbox/ansible/ansible.cfg"
+              
 
               # Watchdog Configuration
               WATCHDOG_TIMEOUT=120  # ⏳ Maximum time (seconds) before watchdog forcefully kills setup (edit per deployment!)
@@ -127,17 +122,7 @@ spec:
                     echo "Skipping Jupyter installation as JUPYTER_DEPLOY is set to 'false'." | tee -a $SETUP_LOG
                   fi
 
-                  # ✅ Run Ansible Uptime Playbook with explicit config path only if Uptime flag is set.
-                  if [ "$UPTIME_DEPLOY" = "true" ]; then
-                    echo "Running Ansible Uptime Playbook: $UPTIME_ANSIBLE_PLAYBOOK_PATH with config: $UPTIME_ANSIBLE_CONFIG_PATH" | tee -a $SETUP_LOG
-                    ANSIBLE_CONFIG="$UPTIME_ANSIBLE_CONFIG_PATH" ansible-playbook -i localhost, -c local "$UPTIME_ANSIBLE_PLAYBOOK_PATH" -e "uptime_token=$UPTIME_TOKEN" 2>&1 | tee -a $SETUP_LOG || {
-                      echo "❌ ERROR: Uptime Ansible playbook execution failed." | tee -a /tmp/setup-failed
-                      kill $TIMEOUT_PID
-                      exit 1
-                    }
-                  else
-                    echo "Skipping Uptime installation as UPTIME_DEPLOY is set to 'false'." | tee -a $SETUP_LOG
-                  fi
+                  
 
                   # ✅ If setup finishes successfully, kill watchdog and mark as ready
                   kill $TIMEOUT_PID

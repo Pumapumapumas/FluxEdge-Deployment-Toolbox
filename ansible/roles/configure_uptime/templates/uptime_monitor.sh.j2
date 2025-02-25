@@ -1,9 +1,11 @@
 #!/bin/bash
+
 UPTIME_KUMA_URL="{{ uptime_kuma_url }}"
+CHECK_INTERVAL="{{ uptime_kuma_interval | default(60) }}"  # Interval between heartbeats
 
-(while true; do
-    curl -s "$UPTIME_KUMA_URL"
-    sleep {{ uptime_kuma_interval | default(60) }}
-done) &  # Run in background
+echo "🚀 Starting Uptime Kuma Passive Monitor..."
 
-exit 0  # Ensure script exits immediately
+while true; do
+    curl -s "$UPTIME_KUMA_URL" && echo "✅ Heartbeat sent at $(date)"
+    sleep $CHECK_INTERVAL
+done

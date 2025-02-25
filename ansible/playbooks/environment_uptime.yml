@@ -27,7 +27,4 @@
 
     # install apt package list from vars
     - role: configure_uptime
-      vars:
-        configure_jupyter_jupyter_conda_env: "edge-ai"
-        configure_jupyter_jupyter_password: "{{ jupyter_password }}"
-        configure_jupyter_jupyter_config_path: "/root/.jupyter"
+
