@@ -12,7 +12,7 @@
     state: file
 
 - name: Start Uptime Kuma Monitor in Background
-  shell: "nohup /usr/local/bin/uptime-monitor.sh >/dev/null 2>&1 &"
+  shell: "nohup /usr/local/bin/uptime-monitor.sh >> /tmp/uptime-monitor.log 2>&1 &"
   args:
     executable: /bin/bash
 

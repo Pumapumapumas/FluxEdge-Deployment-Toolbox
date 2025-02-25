@@ -3,9 +3,19 @@
 UPTIME_KUMA_URL="{{ uptime_kuma_url }}"
 CHECK_INTERVAL="{{ uptime_kuma_interval | default(60) }}"  # Time in seconds
 
-echo "🚀 Starting Uptime Kuma Passive Monitor..."
+echo "🚀 Starting Uptime Kuma Passive Monitor..." | tee -a /tmp/uptime-monitor.log
 
 while true; do
-    curl -s "$UPTIME_KUMA_URL" && echo "✅ Heartbeat sent at $(date)"
+    echo "🕒 Checking connectivity at $(date)" | tee -a /tmp/uptime-monitor.log
+
+    # Send the heartbeat and log success or failure
+    RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" "$UPTIME_KUMA_URL")
+
+    if [[ "$RESPONSE" -eq 200 ]]; then
+        echo "✅ Heartbeat sent at $(date) [Status: $RESPONSE]" | tee -a /tmp/uptime-monitor.log
+    else
+        echo "❌ Failed to send heartbeat at $(date) [Status: $RESPONSE]" | tee -a /tmp/uptime-monitor.log
+    fi
+
     sleep $CHECK_INTERVAL
 done
