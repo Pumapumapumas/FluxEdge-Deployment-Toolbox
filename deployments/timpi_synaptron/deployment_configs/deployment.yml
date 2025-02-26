@@ -24,9 +24,9 @@ spec:
           hostNetwork: true
           env:
             - name: NAME
-              value: ""  # Auto-injected by UI
+              value: ""   # Auto-injected by UI
             - name: GUID
-              value: ""  # Auto-injected by UI
+              value: ""   # Auto-injected by UI
           ports:
             - containerPort: 80
           resources:
@@ -61,7 +61,7 @@ spec:
               done
           env:
             - name: UPTIME_KUMA_URL
-              value: ""  # Auto-injected by UI
+              value: ""   # Auto-injected by UI
 
 ---
 apiVersion: v1
