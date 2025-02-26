@@ -24,9 +24,9 @@ spec:
           hostNetwork: true
           env:
             - name: NAME
-              value: ""  # Auto-injected by UI
+              value: ""  # Placeholder, to be set automatically via UI injection
             - name: GUID
-              value: ""  # Auto-injected by UI
+              value: ""  # Placeholder, to be set automatically via UI injection
           ports:
             - containerPort: 80
           resources:
@@ -38,31 +38,9 @@ spec:
               cpu: 4000m
               memory: 12288M
               ephemeral-storage: 180G
-              nvidia.com/gpu: 1
+              nvidia.com/gpu: 1 
           volumeMounts:
             - mountPath: /mnt/data
-
-        # ✅ Sidecar for Uptime Kuma Passive Monitoring
-        - name: uptime-monitor
-          image: python:3.10
-          command: [ "/bin/bash", "-c" ]
-          args:
-            - |
-              echo "🚀 Starting Uptime Kuma Passive Monitor..." | tee -a /tmp/uptime-monitor.log
-              while true; do
-                  echo "🕒 Checking connectivity at $(date)" | tee -a /tmp/uptime-monitor.log
-                  RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" "$UPTIME_KUMA_URL")
-                  if [[ "$RESPONSE" -eq 200 ]]; then
-                      echo "✅ Heartbeat sent at $(date) [Status: $RESPONSE]" | tee -a /tmp/uptime-monitor.log
-                  else
-                      echo "❌ Failed to send heartbeat at $(date) [Status: $RESPONSE]" | tee -a /tmp/uptime-monitor.log
-                  fi
-                  sleep 60
-              done
-          env:
-            - name: UPTIME_KUMA_URL
-              value: ""  # Auto-injected by UI
-
 ---
 apiVersion: v1
 kind: Service

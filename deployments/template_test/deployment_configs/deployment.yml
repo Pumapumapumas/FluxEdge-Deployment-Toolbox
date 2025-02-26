@@ -47,7 +47,7 @@ spec:
 
               # Uptime Kuma Monitoring
               UPTIME_DEPLOY=true
-              UPTIME_TOKEN="http://192.168.90.103:3001/api/push/VwatnenC8D?status=up&msg=OK&ping="  # in the future this would be injected from the UI
+              UPTIME_TOKEN="http://192.168.90.103:3001/api/push/xka3Jm7DFj?status=up&msg=OK&ping="  # in the future this would be injected from the UI
               UPTIME_ANSIBLE_PLAYBOOK="environment_uptime.yml"  # Name of the Ansible playbook (edit per deployment!)
               UPTIME_ANSIBLE_PLAYBOOK_PATH="/mnt/data/FluxEdge-Deployment-Toolbox/ansible/playbooks/$UPTIME_ANSIBLE_PLAYBOOK"  # Full path (auto-generated)
               UPTIME_ANSIBLE_CONFIG_PATH="/mnt/data/FluxEdge-Deployment-Toolbox/ansible/ansible.cfg"
