@@ -24,178 +24,99 @@ spec:
           hostNetwork: true
           env:
             - name: NAME
-              value: ""  # Placeholder, to be set automatically via UI injection
+              value: ""  # Auto-injected by UI
             - name: GUID
-              value: ""  # Placeholder, to be set automatically via UI injection
-          command:
-            - /bin/bash
-          args:
-            - -c
-            - |
-              ########################################
-              ## 📝 Dev Configuration Section ##
-              ########################################
-
-              ### Modify these variables to easily adjust configuration settings when developing new deployments ###
-
-              # General Config
-              GENERAL_LOG_PATH=/mnt/data/logs
-              SETUP_LOGS=setup.log
-              SETUP_LOG_PATH=$GENERAL_LOG_PATH/$SETUP_LOGS
-
-              # Ansible Configuration
-              ANSIBLE_DEPLOY="true"
-              ANSIBLE_LOGS=ansible.log
-              ANSIBLE_LOGS_PATH="$GENERAL_LOG_PATH/$ANSIBLE_LOGS"
-              ANSIBLE_PLAYBOOK="environment_timpi_synaptron.yml"  # Name of the Ansible playbook (edit per deployment!)
-              ANSIBLE_PLAYBOOK_PATH="/mnt/data/FluxEdge-Deployment-Toolbox/ansible/playbooks/$ANSIBLE_PLAYBOOK"  # Full path (auto-generated)
-              ANSIBLE_CONFIG_PATH="/mnt/data/FluxEdge-Deployment-Toolbox/ansible/ansible.cfg"
-
-              # Timpi Configuration
-              TIMPI_LOGS_REDIRECT=true # when true, redirects log output 
-              TIMPI_LOGS=timpi-synaptron.log # defines log file name
-              TIMPI_LOG_PATH="$GENERAL_LOG_PATH/$TIMPI_LOGS" 
-
-              # Jupyter Configuration
-              JUPYTER_DEPLOY="false"   # set this to true if you want to add jupyter to the deployment (UI can override option!)
-              JUPYTER_LOGS="jupyter-ansible.log"
-              JUPYTER_LOG_PATH="$GENERAL_LOG_PATH/$JUPYTER_LOGS"
-              JUPYTER_TOKEN="jupyter_test_token"   # in the future the UI will manage or inject this value automagically
-              JUPYTER_ANSIBLE_PLAYBOOK="environment_jupyter.yml"  # Name of the Ansible playbook (edit per deployment!)
-              JUPYTER_ANSIBLE_PLAYBOOK_PATH="/mnt/data/FluxEdge-Deployment-Toolbox/ansible/playbooks/$JUPYTER_ANSIBLE_PLAYBOOK"  # Full path (auto-generated)
-              JUPYTER_ANSIBLE_CONFIG_PATH="/mnt/data/FluxEdge-Deployment-Toolbox/ansible/ansible.cfg"
-
-              # Watchdog Configuration
-              WATCHDOG_TIMEOUT=90  # ⏳ Maximum time (seconds) before watchdog forcefully kills setup (edit per deployment!)
-              WATCHDOG_LOGS=watchdog.log
-              WATCHDOG_LOG_PATH="$GENERAL_LOG_PATH/$WATCHDOG_LOGS"
-              
-              # Readiness Probe Configuration (the below readiness probe settings do not currently work without ArgoCD implementation)
-              READINESS_INITIAL_DELAY=5  # ⏳ Time before the first readiness check (seconds)
-              READINESS_PERIOD=10  # 🔄 Interval between readiness checks (seconds)
-              READINESS_FAILURE_THRESHOLD=6  # ❌ Max failed checks before marking as failed (edit this to change total wait time!!!)
-              READINESS_SUCCESS_THRESHOLD=1  # ✅ Required successful check count to mark as ready
-
-              ########################################
-              ##### End Developer Configuration ######
-              ########################################
-
-              setup() {
-                
-                
-                mkdir -p "$GENERAL_LOG_PATH"
-                echo "Creating log directory..." | tee -a $SETUP_LOG_PATH
-                echo "Starting setup process with a watchdog timeout of $WATCHDOG_TIMEOUT seconds..." | tee -a $WATCHDOG_LOG_PATH
-
-                # 🛑 Start a watchdog process to terminate stuck deployments
-                (
-                  sleep $WATCHDOG_TIMEOUT
-                  echo "❌ ERROR: Setup process timed out after $WATCHDOG_TIMEOUT seconds." | tee /tmp/setup-failed
-                  echo "❌ ERROR: Setup process timed out after $WATCHDOG_TIMEOUT seconds." | tee -a $WATCHDOG_LOG_PATH
-                  pkill -P $$  # Kill all child processes
-                  exit 1
-                ) &
-                TIMEOUT_PID=$!  # Store the watchdog process ID
-                
-                # 🏗️ Begin setup tasks
-                {
-                  echo "Updating system and installing dependencies..." | tee -a $SETUP_LOG_PATH
-                  export DEBIAN_FRONTEND=noninteractive
-                  apt-get -y update && apt-get -y upgrade && apt-get -y install tzdata curl vim git ansible 2>&1 | tee -a $SETUP_LOG_PATH || {
-                    echo "❌ ERROR: Failed to install dependencies." | tee -a /tmp/setup-failed
-                    echo "❌ ERROR: Failed to install dependencies." | tee -a $SETUP_LOG_PATH
-                    kill $TIMEOUT_PID
-                    exit 1
-                  }
-
-                  # Check if the mount path exists
-                  echo "Checking for external mount path..." | tee -a $SETUP_LOG_PATH
-                  if [ ! -d "/mnt/data" ]; then
-                      echo "❌ ERROR: Mount path /mnt/data does not exist. Deployment cannot continue." | tee -a /tmp/setup-failed
-                      echo "❌ ERROR: Mount path /mnt/data does not exist. Deployment cannot continue." | tee -a $SETUP_LOG_PATH
-                      kill $TIMEOUT_PID
-                      exit 1
-                  fi
-
-                  # Clone Open Source deployment repository
-                  if [ ! -d "/mnt/data/FluxEdge-Deployment-Toolbox" ]; then
-                      echo "Cloning FluxEdge-Deployment-Toolbox..." | tee -a $SETUP_LOG_PATH
-                      git clone https://github.com/helloskyy-io/FluxEdge-Deployment-Toolbox /mnt/data/FluxEdge-Deployment-Toolbox 2>&1 | tee -a $SETUP_LOG
-                  else
-                      echo "Repository already exists in /mnt/data. Pulling latest changes..." | tee -a $SETUP_LOG_PATH
-                      cd /mnt/data/FluxEdge-Deployment-Toolbox && git pull 2>&1 | tee -a $SETUP_LOG_PATH
-                  fi
-
-                  # ✅ Run Ansible Playbook with explicit config path
-                  echo "Running Ansible Playbook: $ANSIBLE_PLAYBOOK_PATH with config: $ANSIBLE_CONFIG_PATH" | tee -a $SETUP_LOG_PATH
-                  ANSIBLE_CONFIG="$ANSIBLE_CONFIG_PATH" ansible-playbook -i localhost, -c local "$ANSIBLE_PLAYBOOK_PATH" 2>&1 | tee -a $ANSIBLE_LOG_PATH || {
-                    echo "❌ ERROR: Ansible playbook execution failed." | tee -a /tmp/setup-failed
-                    kill $TIMEOUT_PID
-                    exit 1
-                  }
-
-                  # ✅ Run Ansible Jupyter Playbook with explicit config path only if Jupyter flag is set.
-                  if [ "$JUPYTER_DEPLOY" = "true" ]; then
-                    echo "Running Ansible Jupyter Playbook: $JUPYTER_ANSIBLE_PLAYBOOK_PATH with config: $JUPYTER_ANSIBLE_CONFIG_PATH" | tee -a $SETUP_LOG
-                    ANSIBLE_CONFIG="$JUPYTER_ANSIBLE_CONFIG_PATH" ansible-playbook -i localhost, -c local "$JUPYTER_ANSIBLE_PLAYBOOK_PATH" -e "jupyter_token=$JUPYTER_TOKEN" 2>&1 | tee -a $JUPYTER_LOG_PATH || {
-                      echo "❌ ERROR: Jupyter Ansible playbook execution failed." | tee -a /tmp/setup-failed
-                      kill $TIMEOUT_PID
-                      exit 1
-                    }
-                  else
-                    echo "Skipping Jupyter installation as JUPYTER_DEPLOY is set to 'false'." | tee -a $SETUP_LOG_PATH
-                  fi
-
-
-                  # ✅ If setup finishes successfully, kill watchdog and mark as ready
-                  kill $TIMEOUT_PID
-                  touch /tmp/setup-finished
-                  echo "✅ Setup completed successfully in under $WATCHDOG_TIMEOUT seconds!" | tee -a $SETUP_LOG_PATH
-                  echo "✅ Setup completed successfully in under $WATCHDOG_TIMEOUT seconds!" | tee -a $WATCHDOG_LOG_PATH
-                } &
-                
-                # 🚀 Wait for setup to complete
-                wait $!
-              }
-
-              # Execute the setup function
-              setup
-              
-              # Keep container alive
-              tail -f /dev/null
-
-          readinessProbe:
-            exec:
-              command:
-                - /bin/bash
-                - -c
-                - |
-                  if [ -f /tmp/setup-failed ]; then
-                    echo "Deployment failed."
-                    exit 1
-                  elif [ -f /tmp/setup-finished ]; then
-                    exit 0
-                  else
-                    exit 1
-                  fi
-            initialDelaySeconds: 5
-            periodSeconds: 10
-            failureThreshold: 6
-            successThreshold: 1
+              value: ""  # Auto-injected by UI
           ports:
             - containerPort: 80
           resources:
             requests:
               cpu: 4000m
               memory: 12288M
-              ephemeral-storage: 250G
+              ephemeral-storage: 180G
             limits:
               cpu: 4000m
               memory: 12288M
-              ephemeral-storage: 250G
+              ephemeral-storage: 180G
               nvidia.com/gpu: 1
           volumeMounts:
             - mountPath: /mnt/data
+
+        # ✅ Sidecar for Uptime Kuma Passive Monitoring
+        - name: uptime-monitor
+          image: python:3.10-bullseye
+          command: [ "/bin/bash", "-c" ]
+          args:
+            - |
+              apt-get update && apt-get install -y iputils-ping curl;
+              echo "🚀 Starting Uptime Kuma Passive Monitor..." | tee -a /tmp/uptime-monitor.log
+              
+              # Fail fast if webserver monitoring is enabled but no port is set
+              if [ "$UPTIME_KUMA_WEBSERVER" = "true" ] && [ -z "$UPTIME_KUMA_WEBSERVER_PORT" ]; then
+                  echo "❌ ERROR: Webserver monitoring is enabled but no port is specified. Exiting..." | tee -a /tmp/uptime-monitor.log
+                  exit 1
+              fi
+              
+              while true; do
+                  echo "🕒 Checking connectivity to main container at $(date)" | tee -a /tmp/uptime-monitor.log
+                  
+                  MAIN_CONTAINER_IP="127.0.0.1"  # This will work inside the Pod
+                  MAX_RETRIES=3
+                  SUCCESS=false
+                  
+                  if [ "$UPTIME_KUMA_WEBSERVER" = "true" ]; then
+                      for i in $(seq 1 $MAX_RETRIES); do
+                          HTTP_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://$MAIN_CONTAINER_IP:$UPTIME_KUMA_WEBSERVER_PORT)
+                          if [[ "$HTTP_RESPONSE" -eq 200 ]]; then
+                              SUCCESS=true
+                              echo "✅ HTTP check successful. Service is responding on port $UPTIME_KUMA_WEBSERVER_PORT." | tee -a /tmp/uptime-monitor.log
+                              break
+                          else
+                              echo "⚠️ HTTP check failed (attempt $i/$MAX_RETRIES) [Status: $HTTP_RESPONSE]" | tee -a /tmp/uptime-monitor.log
+                              sleep 5
+                          fi
+                      done
+                  else
+                      for i in $(seq 1 $MAX_RETRIES); do
+                          if ping -c 1 $MAIN_CONTAINER_IP &> /dev/null; then
+                              SUCCESS=true
+                              echo "✅ Ping check successful. Main container is reachable." | tee -a /tmp/uptime-monitor.log
+                              break
+                          else
+                              echo "⚠️ Ping check failed (attempt $i/$MAX_RETRIES)" | tee -a /tmp/uptime-monitor.log
+                              sleep 5
+                          fi
+                      done
+                  fi
+                  
+                  if [ "$SUCCESS" = true ] && [ "$UPTIME_KUMA_PING" = "true" ]; then
+                      echo "✅ Main container is responsive. Sending Uptime Kuma heartbeat..." | tee -a /tmp/uptime-monitor.log
+                      for i in $(seq 1 $MAX_RETRIES); do
+                          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" "$UPTIME_KUMA_URL")
+                          if [[ "$RESPONSE" -eq 200 ]]; then
+                              echo "✅ Heartbeat sent at $(date) [Status: $RESPONSE]" | tee -a /tmp/uptime-monitor.log
+                              break
+                          else
+                              echo "❌ Failed to send heartbeat (attempt $i/$MAX_RETRIES) [Status: $RESPONSE]" | tee -a /tmp/uptime-monitor.log
+                              sleep 5
+                          fi
+                      done
+                  else
+                      echo "❌ Main container is unreachable after $MAX_RETRIES attempts. Skipping Uptime Kuma ping." | tee -a /tmp/uptime-monitor.log
+                  fi
+                  
+                  sleep 60
+              done
+          env:
+            - name: UPTIME_KUMA_URL
+              value: ""  # Auto-injected by UI
+            - name: UPTIME_KUMA_PING
+              value: "true"  # Auto-injected by UI
+            - name: UPTIME_KUMA_WEBSERVER
+              value: "false"  # Auto-injected by UI
+            - name: UPTIME_KUMA_WEBSERVER_PORT
+              value: ""  # Auto-injected by UI
+
 ---
 apiVersion: v1
 kind: Service

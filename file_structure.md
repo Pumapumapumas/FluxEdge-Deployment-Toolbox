@@ -41,6 +41,11 @@ File Structure:
 ├── scripts                                     (not in use)
 │   └── shared-utils.sh 
 │
+├── sidecar_containers                          (these are containers that run beside the main deployment in the same pod)
+│   ├── nginx/
+│   ├── prometheus_node_exporter/
+│   └── uptime_kuma_monitoring/ 
+│
 ├── test_suite/                                 (not in use)
 │   ├── shared/
 │   └──  deployment_specific/
