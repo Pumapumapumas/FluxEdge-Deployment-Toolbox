@@ -27,6 +27,10 @@ spec:
               value: ""  # Auto-injected by UI
             - name: GUID
               value: ""  # Auto-injected by UI
+            - name: NVIDIA_VISIBLE_DEVICES
+              value: "1"  # Placeholder, to be set automatically via UI injection
+            - name: CUDA_VISIBLE_DEVICES
+              value: "1"  # Placeholder, to be set automatically via UI injection
           ports:
             - containerPort: 80
           resources:
@@ -57,56 +61,11 @@ spec:
                   exit 1
               fi
               
-              while true; do
-                  echo "🕒 Checking connectivity to main container at $(date)" | tee -a /tmp/uptime-monitor.log
-                  
-                  MAIN_CONTAINER_IP="127.0.0.1"  # This will work inside the Pod
-                  MAX_RETRIES=3
-                  SUCCESS=false
-                  
-                  if [ "$UPTIME_KUMA_WEBSERVER" = "true" ]; then
-                      for i in $(seq 1 $MAX_RETRIES); do
-                          HTTP_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://$MAIN_CONTAINER_IP:$UPTIME_KUMA_WEBSERVER_PORT)
-                          if [[ "$HTTP_RESPONSE" -eq 200 ]]; then
-                              SUCCESS=true
-                              echo "✅ HTTP check successful. Service is responding on port $UPTIME_KUMA_WEBSERVER_PORT." | tee -a /tmp/uptime-monitor.log
-                              break
-                          else
-                              echo "⚠️ HTTP check failed (attempt $i/$MAX_RETRIES) [Status: $HTTP_RESPONSE]" | tee -a /tmp/uptime-monitor.log
-                              sleep 5
-                          fi
-                      done
-                  else
-                      for i in $(seq 1 $MAX_RETRIES); do
-                          if ping -c 1 $MAIN_CONTAINER_IP &> /dev/null; then
-                              SUCCESS=true
-                              echo "✅ Ping check successful. Main container is reachable." | tee -a /tmp/uptime-monitor.log
-                              break
-                          else
-                              echo "⚠️ Ping check failed (attempt $i/$MAX_RETRIES)" | tee -a /tmp/uptime-monitor.log
-                              sleep 5
-                          fi
-                      done
-                  fi
-                  
-                  if [ "$SUCCESS" = true ] && [ "$UPTIME_KUMA_PING" = "true" ]; then
-                      echo "✅ Main container is responsive. Sending Uptime Kuma heartbeat..." | tee -a /tmp/uptime-monitor.log
-                      for i in $(seq 1 $MAX_RETRIES); do
-                          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" "$UPTIME_KUMA_URL")
-                          if [[ "$RESPONSE" -eq 200 ]]; then
-                              echo "✅ Heartbeat sent at $(date) [Status: $RESPONSE]" | tee -a /tmp/uptime-monitor.log
-                              break
-                          else
-                              echo "❌ Failed to send heartbeat (attempt $i/$MAX_RETRIES) [Status: $RESPONSE]" | tee -a /tmp/uptime-monitor.log
-                              sleep 5
-                          fi
-                      done
-                  else
-                      echo "❌ Main container is unreachable after $MAX_RETRIES attempts. Skipping Uptime Kuma ping." | tee -a /tmp/uptime-monitor.log
-                  fi
-                  
-                  sleep 60
-              done
+              # Download and run the monitoring script
+              mkdir -p /opt/monitoring
+              curl -o /opt/monitoring/uptime_monitor.sh -L "https://raw.githubusercontent.com/helloskyy-io/FluxEdge-Deployment-Toolbox/main/sidecar_containers/uptime_kuma_monitoring/uptime_monitor.sh"
+              chmod +x /opt/monitoring/uptime_monitor.sh
+              /opt/monitoring/uptime_monitor.sh
           env:
             - name: UPTIME_KUMA_URL
               value: ""  # Auto-injected by UI
@@ -115,7 +74,7 @@ spec:
             - name: UPTIME_KUMA_WEBSERVER
               value: "false"  # Auto-injected by UI
             - name: UPTIME_KUMA_WEBSERVER_PORT
-              value: ""  # Auto-injected by UI
+              value: "80"  # Auto-injected by UI
 
 ---
 apiVersion: v1

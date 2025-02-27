@@ -27,6 +27,10 @@ spec:
               value: ""  # Placeholder, to be set automatically via UI injection
             - name: GUID
               value: ""  # Placeholder, to be set automatically via UI injection
+            - name: NVIDIA_VISIBLE_DEVICES
+              value: "1"  # Placeholder, to be set automatically via UI injection
+            - name: CUDA_VISIBLE_DEVICES
+              value: "1"  # Placeholder, to be set automatically via UI injection
           ports:
             - containerPort: 80
           resources:
